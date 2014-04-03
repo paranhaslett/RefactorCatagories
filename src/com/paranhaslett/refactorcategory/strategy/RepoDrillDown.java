@@ -16,7 +16,6 @@ import com.paranhaslett.refactorcategory.CodeBlock;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.git.GitRepo;
 import com.paranhaslett.refactorcategory.git.GitRevision;
-import com.paranhaslett.refactorcategory.model.Repo;
 
 public class RepoDrillDown implements DrillDown {
 

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jgit.diff.DiffAlgorithm;
+import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.diff.DiffAlgorithm.SupportedAlgorithm;
 import org.eclipse.jgit.diff.RawText;
@@ -14,15 +15,24 @@ import org.eclipse.jgit.diff.Sequence;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.util.RawCharSequence;
 
+import AST.ASTNode;
+
+import com.paranhaslett.refactorcategory.CodeBlock;
 import com.paranhaslett.refactorcategory.CodeBlockComparitor;
 import com.paranhaslett.refactorcategory.CodeBlockSequence;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Type;
+import com.paranhaslett.refactorcategory.Range;
 
 public class TextDrillDown implements DrillDown {
 
   @Override
   public List<Difference> drilldown(Difference difference) throws MissingObjectException, IOException {
+    
+    CodeBlock oldCb = difference.getOldCb();
+    CodeBlock newb = difference.getNewCb();
+     
+   
     
    RawText oldRaw = difference.getOldCb().getEntry().getRawText();
    RawText newRaw = difference.getOldCb().getEntry().getRawText();
@@ -31,13 +41,24 @@ public class TextDrillDown implements DrillDown {
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
             RawTextComparator.WS_IGNORE_ALL, oldRaw, newRaw);
     
-    List<Difference> results = null;// difference.convertEdits(editList);
+    for (Edit edit:editList){
+      Range<Long> editRangeA = convertEditRange(edit.getBeginA(),edit.getEndA());
+      System.out.println(difference.getOldCb().getEntry().getRawText(editRangeA));
+    }
     
     //do the text difference 
     //if it is java
+    
+    //load in the asts
     //do the java difference
   
     return new ArrayList<Difference>();
+  }
+  
+  private Range<Long> convertEditRange(int start, int end){
+    long rangeStart = (long)ASTNode.makePosition(start,0);
+    long rangeEnd = (long)ASTNode.makePosition(end, 0);
+    return new Range(rangeStart, rangeEnd);
   }
 
   private List<Difference> getBestScores(List<List<Difference>> grid) {

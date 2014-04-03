@@ -1,7 +1,10 @@
 package com.paranhaslett.refactorcategory.ast;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
 import AST.ASTNode;
-import AST.CompilationUnit;
+import beaver.Parser.Exception;
 
 import com.paranhaslett.refactorcategory.Range;
 
@@ -12,8 +15,14 @@ public class Ast {
   //com.paranhaslett.refactorcategory.ast.Ast.content()  content()
 
 
-  CompilationUnit getCompilationUnit(String name, byte[] content){
-    return null;
+  public void getCompilationUnit(String name, byte[] content){
+    ByteArrayInputStream bis = new ByteArrayInputStream(content);
+    try {
+      astNode = program.getJavaParser().parse(bis, name);
+    } catch (IOException | Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } 
   }
 
   @Override
@@ -21,14 +30,6 @@ public class Ast {
     // TODO Auto-generated method stub
     return super.hashCode();
   }
-
-  public Ast(){}
-  
-  public Ast(Ast ast) {
-    // TODO Auto-generated constructor stub
-  }
- 
-  
   
   @Override
   public boolean equals(Object obj) {
@@ -68,9 +69,9 @@ public class Ast {
   }
   
   public boolean isEmpty() {
-    // TODO Auto-generated method stub
-    return false;
+    return astNode == null;
   }
+  
   public void setAstNode(ASTNode<ASTNode> astNode) {
     this.astNode = astNode;
   }

@@ -45,7 +45,6 @@ public class CodeBlock {
   @Override
   public Object clone() throws CloneNotSupportedException {
     CodeBlock clone = (CodeBlock) super.clone();
-    clone.ast = new Ast(ast);
     clone.block = new Range<Long>(block);
     return super.clone();
   }

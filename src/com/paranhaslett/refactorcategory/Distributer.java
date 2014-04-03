@@ -16,10 +16,8 @@ public class Distributer {
     try {
       rdd.drilldown(null);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (GitAPIException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
 

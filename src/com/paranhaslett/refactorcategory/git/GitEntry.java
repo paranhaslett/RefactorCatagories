@@ -18,6 +18,7 @@ import org.eclipse.jgit.storage.pack.PackConfig;
 import org.eclipse.jgit.treewalk.TreeWalk;
 
 import com.paranhaslett.refactorcategory.Range;
+import com.paranhaslett.refactorcategory.ast.Ast;
 import com.paranhaslett.refactorcategory.model.Entry;
 
 public class GitEntry implements Entry {
@@ -55,10 +56,11 @@ public class GitEntry implements Entry {
     return null;
   }
 
-  public void open() throws MissingObjectException, IOException {
+  public byte[] open() throws MissingObjectException, IOException {
+    byte[] bytes;
 
     if (mode == FileMode.MISSING || mode.getObjectType() != Constants.OBJ_BLOB) {
-
+      bytes=GitBothEntries.EMPTY;
     } else {
 
       if (!id.isComplete()) {
@@ -76,23 +78,19 @@ public class GitEntry implements Entry {
         ObjectLoader ldr = ((GitRepo) GitRepo.getRepo()).source.open(side,
             bothEntries);
 
-        byte[] bytes = ldr.getBytes(PackConfig.DEFAULT_BIG_FILE_THRESHOLD);
+        bytes=ldr.getBytes(PackConfig.DEFAULT_BIG_FILE_THRESHOLD);
         rawText = new RawText(bytes);
 
-      } catch (LargeObjectException.ExceedsLimit overLimit) {
-        rawText = new RawText(GitBothEntries.BINARY);
-
-      } catch (LargeObjectException.ExceedsByteArrayLimit overLimit) {
-        rawText = new RawText(GitBothEntries.BINARY);
-
-      } catch (LargeObjectException.OutOfMemory tooBig) {
-        rawText = new RawText(GitBothEntries.BINARY);
+      } catch (LargeObjectException.ExceedsLimit | LargeObjectException.ExceedsByteArrayLimit | LargeObjectException.OutOfMemory overLimit) {
+        bytes = GitBothEntries.BINARY;
 
       } catch (LargeObjectException tooBig) {
         tooBig.setObjectId(id.toObjectId());
         throw tooBig;
       }
     }
+    rawText = new RawText(bytes);
+    return bytes;
   }
 
   public void setup(TreeWalk walk, int sideNum, GitBothEntries bothEnt,
@@ -116,4 +114,5 @@ public class GitEntry implements Entry {
   public RawText getRawText() {
     return rawText;
   }
+
 }

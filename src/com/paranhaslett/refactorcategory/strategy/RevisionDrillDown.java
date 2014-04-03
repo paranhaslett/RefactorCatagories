@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.diff.RawText;
 
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Type;
@@ -22,7 +23,7 @@ public class RevisionDrillDown implements DrillDown {
     
 
     List<Difference> result = new ArrayList<Difference>();
-    TextDrillDown fdd = new TextDrillDown();
+    TextDrillDown tdd = new TextDrillDown();
 
     // Setup the both revisions as programs
     Ast oldAst = new Ast();
@@ -47,15 +48,22 @@ public class RevisionDrillDown implements DrillDown {
         Entry oldEnt = diff.getOldCb().getEntry();
         Entry newEnt = diff.getNewCb().getEntry();
         System.out.println(oldEnt.getPath() + " to " + newEnt.getPath() );
+        
+        
         if(newEnt.getPath().endsWith(".class")||newEnt.getPath().endsWith(".class")){
           diff.setType(Type.BINARY);
         } else {
           newEnt.open();
+          /*rawText = new RawText(bytes);
+          if (path.endsWith(".java")){
+            ast= new Ast();
+            ast.getCompilationUnit(path, bytes);
+          }*/
           oldEnt.open();
         }
         switch (diff.getType()) {
         case MODIFY:
-          result.addAll(fdd.drilldown(diff));
+          result.addAll(tdd.drilldown(diff));
           break;
         case DELETE:
           diff.setScore(100);
@@ -82,7 +90,10 @@ public class RevisionDrillDown implements DrillDown {
       List<List<Difference>> insertdiffs = new ArrayList<List<Difference>>();
       List<List<Difference>> deletediffs = new ArrayList<List<Difference>>();
       for (Difference diff : inserts) {
+        Entry oldEnt = diff.getOldCb().getEntry();
         Entry newEnt = diff.getNewCb().getEntry();
+        System.out.println(oldEnt.getPath() + " insert " + newEnt.getPath() );
+        
         String path = newEnt.getPath();
         String pathExt = path.substring(path.lastIndexOf('.'), path.length());
         if (filetypes.contains(pathExt)){
@@ -101,6 +112,9 @@ public class RevisionDrillDown implements DrillDown {
       
       for (Difference diff : deletes) {
         Entry oldEnt = diff.getOldCb().getEntry();
+        Entry newEnt = diff.getNewCb().getEntry();
+        System.out.println(oldEnt.getPath() + " delete " + newEnt.getPath() );
+        
         String path = oldEnt.getPath();
         String pathExt = path.substring(path.lastIndexOf('.'), path.length());
         if (filetypes.contains(pathExt)){
@@ -130,6 +144,21 @@ public class RevisionDrillDown implements DrillDown {
       ((GitRepo)GitRepo.getRepo()).release();
     }
     return result;
+  }
+
+  private String getPathExt(Entry ent) {
+    
+    System.out.println(ent.getPath());
+    String path = ent.getPath();
+    int index = path.lastIndexOf('.');
+    if (index == -1){
+      index = path.lastIndexOf('/');
+    }
+    if (index == -1){
+      index = 0;
+    }
+    String pathExt = path.substring(index, path.length());
+    return pathExt;
   }
 
  
