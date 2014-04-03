@@ -39,7 +39,7 @@ public class RepoDrillDown implements DrillDown {
          GitRevision newGr = new GitRevision(newRc);
          GitRevision oldGr = new GitRevision(oldRc);
          
-         GitRepo.getRepo().setCurrentRevision(oldGr, newGr);
+         //GitRepo.getRepo().setCurrentRevision(oldGr, newGr);
          
          CodeBlock oldCb = new CodeBlock();
          CodeBlock newCb = new CodeBlock();

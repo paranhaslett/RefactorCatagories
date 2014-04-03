@@ -1,8 +1,10 @@
 package com.paranhaslett.refactorcategory.git;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Collection;
 
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.Side;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.errors.AmbiguousObjectException;
@@ -11,43 +13,62 @@ import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.AbbreviatedObjectId;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
-import org.eclipse.jgit.lib.MutableObjectId;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.storage.pack.PackConfig;
-import org.eclipse.jgit.treewalk.TreeWalk;
+
+import beaver.Parser.Exception;
 
 import com.paranhaslett.refactorcategory.Range;
 import com.paranhaslett.refactorcategory.ast.Ast;
 import com.paranhaslett.refactorcategory.model.Entry;
+import com.paranhaslett.refactorcategory.model.Revision;
 
 public class GitEntry implements Entry {
 
-  GitBothEntries bothEntries;
-  String path;
-  RawText rawText;
+  //GitEntryDifference entryDifference;
   AbbreviatedObjectId id;
   FileMode mode;
+  String path;
+  RawText rawText;
   Side side;
+  Ast compilationUnit;
+  DiffEntry diffEntry;
+
+  public GitEntry(AbbreviatedObjectId id, FileMode mode, String path,
+      Side side, DiffEntry diffEntry) {
+    this.id = id;
+    this.mode = mode;
+    this.path = path;
+    this.side = side;
+    this.diffEntry = diffEntry;
+  }
+
+  public Ast getCompilationUnit(Revision revision, String name, byte[] content) {
+    Ast ast = new Ast();
+    GitRevision gitRevision = (GitRevision) revision;
+    ByteArrayInputStream bis = new ByteArrayInputStream(content);
+    try {
+      ast.setAstNode(gitRevision.getProgram().getJavaParser().parse(bis, name));
+      return ast;
+    } catch (IOException | Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return null;
+  }
 
   public AbbreviatedObjectId getId() {
     return id;
-  }
-
-  public void setId(AbbreviatedObjectId id) {
-    this.id = id;
-  }
-
-  public GitBothEntries getBoth() {
-    return bothEntries;
   }
 
   public String getPath() {
     return path;
   }
 
-  public void setPath(String path) {
-    this.path = path;
+  @Override
+  public RawText getRawText() {
+    return rawText;
   }
 
   @Override
@@ -60,7 +81,7 @@ public class GitEntry implements Entry {
     byte[] bytes;
 
     if (mode == FileMode.MISSING || mode.getObjectType() != Constants.OBJ_BLOB) {
-      bytes=GitBothEntries.EMPTY;
+      bytes = GitEntryDifference.EMPTY;
     } else {
 
       if (!id.isComplete()) {
@@ -76,43 +97,33 @@ public class GitEntry implements Entry {
 
       try {
         ObjectLoader ldr = ((GitRepo) GitRepo.getRepo()).source.open(side,
-            bothEntries);
+            diffEntry);
 
-        bytes=ldr.getBytes(PackConfig.DEFAULT_BIG_FILE_THRESHOLD);
+        bytes = ldr.getBytes(PackConfig.DEFAULT_BIG_FILE_THRESHOLD);
         rawText = new RawText(bytes);
 
-      } catch (LargeObjectException.ExceedsLimit | LargeObjectException.ExceedsByteArrayLimit | LargeObjectException.OutOfMemory overLimit) {
-        bytes = GitBothEntries.BINARY;
+      } catch (LargeObjectException.ExceedsLimit
+          | LargeObjectException.ExceedsByteArrayLimit
+          | LargeObjectException.OutOfMemory overLimit) {
+        bytes = GitEntryDifference.BINARY;
 
       } catch (LargeObjectException tooBig) {
         tooBig.setObjectId(id.toObjectId());
         throw tooBig;
       }
     }
+
     rawText = new RawText(bytes);
+
     return bytes;
   }
 
-  public void setup(TreeWalk walk, int sideNum, GitBothEntries bothEnt,
-      MutableObjectId idBuf) {
-    walk.getObjectId(idBuf, sideNum);
-    id = AbbreviatedObjectId.fromObjectId(idBuf);
-    mode = walk.getFileMode(sideNum);
-    path = walk.getPathString();
-    switch (sideNum) {
-    case 0:
-      side = Side.OLD;
-      break;
-    case 1:
-      side = Side.NEW;
-      break;
-    }
-    this.bothEntries = bothEnt;
+  public void setId(AbbreviatedObjectId id) {
+    this.id = id;
   }
 
-  @Override
-  public RawText getRawText() {
-    return rawText;
+  public void setPath(String path) {
+    this.path = path;
   }
 
 }

@@ -6,12 +6,12 @@ import java.util.List;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.diff.RawText;
 
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Type;
-import com.paranhaslett.refactorcategory.ast.Ast;
+import com.paranhaslett.refactorcategory.git.GitEntryDifference;
 import com.paranhaslett.refactorcategory.git.GitRepo;
+import com.paranhaslett.refactorcategory.git.GitRevision;
 import com.paranhaslett.refactorcategory.model.Entry;
 
 public class RevisionDrillDown implements DrillDown {
@@ -23,47 +23,33 @@ public class RevisionDrillDown implements DrillDown {
     
 
     List<Difference> result = new ArrayList<Difference>();
-    TextDrillDown tdd = new TextDrillDown();
+    EntryDrillDown edd = new EntryDrillDown();
 
     // Setup the both revisions as programs
-    Ast oldAst = new Ast();
-    oldAst.setProgram();
-    difference.getOldCb().setAst(oldAst);
+    difference.getOldCb().getRevision().setProgram();
+    difference.getNewCb().getRevision().setProgram();
+    
+   
 
-    Ast newAst = new Ast();
-    newAst.setProgram();
-    difference.getNewCb().setAst(newAst);
+    List<Difference> inserts = new ArrayList<Difference>();
+    List<Difference> deletes = new ArrayList<Difference>();
 
-    try {
-
-      List<Difference> filesDiff = ((GitRepo)GitRepo.getRepo()).getCurrentRevision().getFileEntries();
-
-      List<Difference> inserts = new ArrayList<Difference>();
-      List<Difference> deletes = new ArrayList<Difference>();
-
+    try {     
+      List<Difference> filesDiff = GitEntryDifference.getFileEntries(difference);
+      
       // Try all the modifies first then deal with the inserts and deletes
       // see if it is java equivalent
       for (Difference diff : filesDiff) {
         
         Entry oldEnt = diff.getOldCb().getEntry();
-        Entry newEnt = diff.getNewCb().getEntry();
-        System.out.println(oldEnt.getPath() + " to " + newEnt.getPath() );
-        
+        Entry newEnt = diff.getNewCb().getEntry();   
         
         if(newEnt.getPath().endsWith(".class")||newEnt.getPath().endsWith(".class")){
           diff.setType(Type.BINARY);
-        } else {
-          newEnt.open();
-          /*rawText = new RawText(bytes);
-          if (path.endsWith(".java")){
-            ast= new Ast();
-            ast.getCompilationUnit(path, bytes);
-          }*/
-          oldEnt.open();
-        }
+        } 
         switch (diff.getType()) {
         case MODIFY:
-          result.addAll(tdd.drilldown(diff));
+          result.addAll(edd.drilldown(diff));
           break;
         case DELETE:
           diff.setScore(100);
@@ -90,12 +76,8 @@ public class RevisionDrillDown implements DrillDown {
       List<List<Difference>> insertdiffs = new ArrayList<List<Difference>>();
       List<List<Difference>> deletediffs = new ArrayList<List<Difference>>();
       for (Difference diff : inserts) {
-        Entry oldEnt = diff.getOldCb().getEntry();
-        Entry newEnt = diff.getNewCb().getEntry();
-        System.out.println(oldEnt.getPath() + " insert " + newEnt.getPath() );
-        
-        String path = newEnt.getPath();
-        String pathExt = path.substring(path.lastIndexOf('.'), path.length());
+        Entry ent = diff.getNewCb().getEntry();
+        String pathExt = getPathExt(ent);
         if (filetypes.contains(pathExt)){
           int index =filetypes.indexOf(pathExt);
           insertdiffs.get(index).add(diff);
@@ -111,12 +93,8 @@ public class RevisionDrillDown implements DrillDown {
       }
       
       for (Difference diff : deletes) {
-        Entry oldEnt = diff.getOldCb().getEntry();
-        Entry newEnt = diff.getNewCb().getEntry();
-        System.out.println(oldEnt.getPath() + " delete " + newEnt.getPath() );
-        
-        String path = oldEnt.getPath();
-        String pathExt = path.substring(path.lastIndexOf('.'), path.length());
+        Entry ent = diff.getOldCb().getEntry();
+        String pathExt = getPathExt(ent);
         if (filetypes.contains(pathExt)){
           int index =filetypes.indexOf(pathExt);
           deletediffs.get(index).add(diff);

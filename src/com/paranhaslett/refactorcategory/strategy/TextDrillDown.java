@@ -6,20 +6,16 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jgit.diff.DiffAlgorithm;
+import org.eclipse.jgit.diff.DiffAlgorithm.SupportedAlgorithm;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
-import org.eclipse.jgit.diff.DiffAlgorithm.SupportedAlgorithm;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
-import org.eclipse.jgit.diff.Sequence;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.util.RawCharSequence;
 
 import AST.ASTNode;
 
 import com.paranhaslett.refactorcategory.CodeBlock;
-import com.paranhaslett.refactorcategory.CodeBlockComparitor;
-import com.paranhaslett.refactorcategory.CodeBlockSequence;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Type;
 import com.paranhaslett.refactorcategory.Range;
@@ -46,10 +42,8 @@ public class TextDrillDown implements DrillDown {
       System.out.println(difference.getOldCb().getEntry().getRawText(editRangeA));
     }
     
-    //do the text difference 
-    //if it is java
     
-    //load in the asts
+    //if it is java
     //do the java difference
   
     return new ArrayList<Difference>();
@@ -58,7 +52,7 @@ public class TextDrillDown implements DrillDown {
   private Range<Long> convertEditRange(int start, int end){
     long rangeStart = (long)ASTNode.makePosition(start,0);
     long rangeEnd = (long)ASTNode.makePosition(end, 0);
-    return new Range(rangeStart, rangeEnd);
+    return new Range<Long>(rangeStart, rangeEnd);
   }
 
   private List<Difference> getBestScores(List<List<Difference>> grid) {

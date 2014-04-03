@@ -1,10 +1,5 @@
 package com.paranhaslett.refactorcategory;
 
-import java.util.List;
-
-import org.eclipse.jgit.diff.Edit;
-import org.eclipse.jgit.diff.EditList;
-
 import com.paranhaslett.refactorcategory.model.Repo;
 
 public class Difference implements Cloneable{
@@ -84,8 +79,10 @@ public class Difference implements Cloneable{
 
   @Override
   public Object clone() throws CloneNotSupportedException {
-    // TODO Auto-generated method stub
-    return super.clone();
+    Difference difference = (Difference)super.clone();
+    difference.setNewCb((CodeBlock)difference.newCb.clone());
+    difference.setOldCb((CodeBlock)difference.oldCb.clone());
+    return difference;
   }
   
 }
