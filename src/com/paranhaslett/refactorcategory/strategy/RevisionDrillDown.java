@@ -10,16 +10,19 @@ import org.eclipse.jgit.api.errors.JGitInternalException;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Type;
 import com.paranhaslett.refactorcategory.ast.Ast;
-import com.paranhaslett.refactorcategory.git.GitHelper;
+import com.paranhaslett.refactorcategory.git.GitRepo;
+import com.paranhaslett.refactorcategory.model.Entry;
 
 public class RevisionDrillDown implements DrillDown {
 
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
+    System.out.println(difference.getOldCb().getRevision().getName() + " to " + difference.getNewCb().getRevision().getName() );
+    
 
     List<Difference> result = new ArrayList<Difference>();
-    FileEntryDrillDown fdd = new FileEntryDrillDown();
+    TextDrillDown fdd = new TextDrillDown();
 
     // Setup the both revisions as programs
     Ast oldAst = new Ast();
@@ -32,8 +35,7 @@ public class RevisionDrillDown implements DrillDown {
 
     try {
 
-      List<Difference> filesDiff = difference.getOldCb().getRevision()
-          .getFileEntries(difference);
+      List<Difference> filesDiff = ((GitRepo)GitRepo.getRepo()).getCurrentRevision().getFileEntries();
 
       List<Difference> inserts = new ArrayList<Difference>();
       List<Difference> deletes = new ArrayList<Difference>();
@@ -41,12 +43,18 @@ public class RevisionDrillDown implements DrillDown {
       // Try all the modifies first then deal with the inserts and deletes
       // see if it is java equivalent
       for (Difference diff : filesDiff) {
-        if(diff.getOldCb().getEntry().getPath().endsWith(".class")||diff.getNewCb().getEntry().getPath().endsWith(".class")){
+        
+        Entry oldEnt = diff.getOldCb().getEntry();
+        Entry newEnt = diff.getNewCb().getEntry();
+        System.out.println(oldEnt.getPath() + " to " + newEnt.getPath() );
+        if(newEnt.getPath().endsWith(".class")||newEnt.getPath().endsWith(".class")){
           diff.setType(Type.BINARY);
+        } else {
+          newEnt.open();
+          oldEnt.open();
         }
-        System.out.println(diff.getOldCb().getEntry().getPath() + " to " + diff.getNewCb().getEntry().getPath() );
         switch (diff.getType()) {
-        case MODIFY:      
+        case MODIFY:
           result.addAll(fdd.drilldown(diff));
           break;
         case DELETE:
@@ -74,7 +82,8 @@ public class RevisionDrillDown implements DrillDown {
       List<List<Difference>> insertdiffs = new ArrayList<List<Difference>>();
       List<List<Difference>> deletediffs = new ArrayList<List<Difference>>();
       for (Difference diff : inserts) {
-        String path = diff.getNewCb().getEntry().getPath();
+        Entry newEnt = diff.getNewCb().getEntry();
+        String path = newEnt.getPath();
         String pathExt = path.substring(path.lastIndexOf('.'), path.length());
         if (filetypes.contains(pathExt)){
           int index =filetypes.indexOf(pathExt);
@@ -91,7 +100,8 @@ public class RevisionDrillDown implements DrillDown {
       }
       
       for (Difference diff : deletes) {
-        String path = diff.getOldCb().getEntry().getPath();
+        Entry oldEnt = diff.getOldCb().getEntry();
+        String path = oldEnt.getPath();
         String pathExt = path.substring(path.lastIndexOf('.'), path.length());
         if (filetypes.contains(pathExt)){
           int index =filetypes.indexOf(pathExt);
@@ -111,13 +121,13 @@ public class RevisionDrillDown implements DrillDown {
       for (int i=0; i<filetypes.size(); i++){
         List<Difference> insMatchs = insertdiffs.get(i);
         List<Difference> delMatchs = deletediffs.get(i);
-        result.addAll(fdd.matchup(insMatchs, delMatchs));
+        //result.addAll(fdd.matchup(insMatchs, delMatchs));
       } 
 
     } catch (IOException e) {
       throw new JGitInternalException(e.getMessage(), e);
     } finally {
-      GitHelper.getGitHelper().release();
+      ((GitRepo)GitRepo.getRepo()).release();
     }
     return result;
   }

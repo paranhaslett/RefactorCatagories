@@ -1,113 +1,119 @@
 package com.paranhaslett.refactorcategory.git;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
-import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.internal.JGitText;
+import org.eclipse.jgit.diff.DiffEntry.Side;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.errors.LargeObjectException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.AbbreviatedObjectId;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.MutableObjectId;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.storage.pack.PackConfig;
 import org.eclipse.jgit.treewalk.TreeWalk;
 
-import com.paranhaslett.refactorcategory.CodeBlock;
-import com.paranhaslett.refactorcategory.Difference;
-import com.paranhaslett.refactorcategory.Difference.Type;
+import com.paranhaslett.refactorcategory.Range;
+import com.paranhaslett.refactorcategory.model.Entry;
 
-public class GitEntry extends DiffEntry {
+public class GitEntry implements Entry {
 
-  /** Magical SHA1 used for file adds or deletes */
-  static final AbbreviatedObjectId A_ZERO = AbbreviatedObjectId
-      .fromObjectId(ObjectId.zeroId());
+  GitBothEntries bothEntries;
+  String path;
+  RawText rawText;
+  AbbreviatedObjectId id;
+  FileMode mode;
+  Side side;
 
-  private GitFileEntry newSide;
-  private GitFileEntry oldSide;
-
-  public GitFileEntry getNewSide() {
-    return newSide;
+  public AbbreviatedObjectId getId() {
+    return id;
   }
 
-  public void setNewSide(GitFileEntry newSide) {
-    this.newSide = newSide;
+  public void setId(AbbreviatedObjectId id) {
+    this.id = id;
   }
 
-  public GitFileEntry getOldSide() {
-    return oldSide;
+  public GitBothEntries getBoth() {
+    return bothEntries;
   }
 
-  public void setOldSide(GitFileEntry oldSide) {
-    this.oldSide = oldSide;
+  public String getPath() {
+    return path;
   }
 
-  public static List<Difference> scans(TreeWalk walk) throws IOException {
-    if (walk.getTreeCount() != 2)
-      throw new IllegalArgumentException(
-          JGitText.get().treeWalkMustHaveExactlyTwoTrees);
+  public void setPath(String path) {
+    this.path = path;
+  }
 
-    List<Difference> r = new ArrayList<Difference>();
-    MutableObjectId idBuf = new MutableObjectId();
-    while (walk.next()) {
-      Difference difference = new Difference();
-      GitEntry entry = new GitEntry();
-      entry.newSide = new GitFileEntry();
-      entry.oldSide = new GitFileEntry();
-      entry.newSide.setSide(Side.NEW);
-      entry.oldSide.setSide(Side.OLD);
+  @Override
+  public String getRawText(Range<Long> range) {
+    // TODO Auto-generated method stub
+    return null;
+  }
 
-      CodeBlock newCb = new CodeBlock();
-      CodeBlock oldCb = new CodeBlock();
-      newCb.setEntry(entry.newSide);
-      oldCb.setEntry(entry.oldSide);
+  public void open() throws MissingObjectException, IOException {
 
-      difference.setNewCb(newCb);
-      difference.setOldCb(oldCb);
+    if (mode == FileMode.MISSING || mode.getObjectType() != Constants.OBJ_BLOB) {
 
-      walk.getObjectId(idBuf, 0);
-      entry.oldId = AbbreviatedObjectId.fromObjectId(idBuf);
+    } else {
 
-      walk.getObjectId(idBuf, 1);
-      entry.newId = AbbreviatedObjectId.fromObjectId(idBuf);
-
-      entry.oldMode = walk.getFileMode(0);
-      entry.newMode = walk.getFileMode(1);
-      entry.newPath = entry.oldPath = walk.getPathString();
-
-      if (entry.oldMode == FileMode.MISSING) {
-        entry.oldPath = DiffEntry.DEV_NULL;
-        entry.changeType = ChangeType.ADD;
-        difference.setType(Type.INSERT);
-        r.add(difference);
-      } else if (entry.newMode == FileMode.MISSING) {
-        entry.newPath = DiffEntry.DEV_NULL;
-        entry.changeType = ChangeType.DELETE;
-        difference.setType(Type.DELETE);
-        r.add(difference);
-      } else if (!entry.oldId.equals(entry.newId)) {
-        entry.changeType = ChangeType.MODIFY;
-        difference.setType(Type.MODIFY);
-        r.add(difference);
-
-      } else if (entry.oldMode != entry.newMode) {
-        entry.changeType = ChangeType.MODIFY;
-        difference.setType(Type.MODIFY);
-        r.add(difference);
+      if (!id.isComplete()) {
+        Collection<ObjectId> ids = ((GitRepo) GitRepo.getRepo()).reader
+            .resolve(id);
+        if (ids.size() == 1) {
+          id = AbbreviatedObjectId.fromObjectId(ids.iterator().next());
+        } else if (ids.size() == 0)
+          throw new MissingObjectException(id, Constants.OBJ_BLOB);
+        else
+          throw new AmbiguousObjectException(id, ids);
       }
 
-      if (walk.isSubtree()) {
-        walk.enterSubtree();
+      try {
+        ObjectLoader ldr = ((GitRepo) GitRepo.getRepo()).source.open(side,
+            bothEntries);
+
+        byte[] bytes = ldr.getBytes(PackConfig.DEFAULT_BIG_FILE_THRESHOLD);
+        rawText = new RawText(bytes);
+
+      } catch (LargeObjectException.ExceedsLimit overLimit) {
+        rawText = new RawText(GitBothEntries.BINARY);
+
+      } catch (LargeObjectException.ExceedsByteArrayLimit overLimit) {
+        rawText = new RawText(GitBothEntries.BINARY);
+
+      } catch (LargeObjectException.OutOfMemory tooBig) {
+        rawText = new RawText(GitBothEntries.BINARY);
+
+      } catch (LargeObjectException tooBig) {
+        tooBig.setObjectId(id.toObjectId());
+        throw tooBig;
       }
     }
-    return r;
   }
 
-  public void setNewId(AbbreviatedObjectId id) {
-    newId = id;
+  public void setup(TreeWalk walk, int sideNum, GitBothEntries bothEnt,
+      MutableObjectId idBuf) {
+    walk.getObjectId(idBuf, sideNum);
+    id = AbbreviatedObjectId.fromObjectId(idBuf);
+    mode = walk.getFileMode(sideNum);
+    path = walk.getPathString();
+    switch (sideNum) {
+    case 0:
+      side = Side.OLD;
+      break;
+    case 1:
+      side = Side.NEW;
+      break;
+    }
+    this.bothEntries = bothEnt;
   }
 
-  public void setOldId(AbbreviatedObjectId id) {
-    oldId = id;
+  @Override
+  public RawText getRawText() {
+    return rawText;
   }
-
 }

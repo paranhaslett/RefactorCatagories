@@ -1,7 +1,11 @@
 package com.paranhaslett.refactorcategory;
 
+import java.util.List;
+
 import org.eclipse.jgit.diff.Edit;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.diff.EditList;
+
+import com.paranhaslett.refactorcategory.model.Repo;
 
 public class Difference implements Cloneable{
   public enum Language {
@@ -12,16 +16,16 @@ public class Difference implements Cloneable{
     BINARY, COPY, DELETE, EMPTY, INSERT, MODIFY, MOVE, RENAMED, REPLACE, VISIBILITY_REDUCTION, EQUIVALENT
   }
 
-  Edit edit;
   Language language;
   CodeBlock newCb;
   CodeBlock oldCb;
-  Repository Repo;
+  Repo Repo;
   double score;
   Type type;
-
-  public Edit getEdit() {
-    return edit;
+  
+  public Difference(CodeBlock oldCb, CodeBlock newCb){
+    this.newCb = newCb;
+    this.oldCb = oldCb;
   }
 
   public Language getLanguage() {
@@ -36,7 +40,7 @@ public class Difference implements Cloneable{
     return oldCb;
   }
 
-  public Repository getRepo() {
+  public Repo getRepo() {
     return Repo;
   }
 
@@ -46,10 +50,6 @@ public class Difference implements Cloneable{
 
   public Type getType() {
     return type;
-  }
-
-  public void setEdit(Edit edit) {
-    this.edit = edit;
   }
 
   public void setLanguage(Language language) {
@@ -64,7 +64,7 @@ public class Difference implements Cloneable{
     this.oldCb = oldCb;
   }
 
-  public void setRepo(Repository repo) {
+  public void setRepo(Repo repo) {
     Repo = repo;
   }
 
@@ -87,8 +87,5 @@ public class Difference implements Cloneable{
     // TODO Auto-generated method stub
     return super.clone();
   }
-  
-  
-  
   
 }

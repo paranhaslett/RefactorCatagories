@@ -7,7 +7,6 @@ public abstract class CodeBlockComparitor extends
 
   public static final CodeBlockComparitor DEFAULT = new CodeBlockComparitor() {
 
-
     @Override
     public boolean equals(CodeBlockSequence a, int ai, CodeBlockSequence b,
         int bi) {

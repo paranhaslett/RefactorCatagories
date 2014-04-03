@@ -1,13 +1,13 @@
 package com.paranhaslett.refactorcategory;
 
 import com.paranhaslett.refactorcategory.ast.Ast;
-import com.paranhaslett.refactorcategory.model.FileEntry;
+import com.paranhaslett.refactorcategory.model.Entry;
 import com.paranhaslett.refactorcategory.model.Revision;
 
 public class CodeBlock {
   Ast ast;
   Range<Long> block;
-  FileEntry entry;
+  Entry entry;
   Revision revision;
   
   public Ast getAst() {
@@ -18,7 +18,7 @@ public class CodeBlock {
     return block;
   }
   
-  public FileEntry getEntry() {
+  public Entry getEntry() {
     return entry;
   }
   
@@ -34,7 +34,7 @@ public class CodeBlock {
     this.block = block;
   }
   
-  public void setEntry(FileEntry entry) {
+  public void setEntry(Entry entry) {
     this.entry = entry;
   }
   
