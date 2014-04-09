@@ -17,6 +17,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.storage.pack.PackConfig;
 
+import AST.ASTNode;
 import beaver.Parser.Exception;
 
 import com.paranhaslett.refactorcategory.Range;
@@ -26,7 +27,7 @@ import com.paranhaslett.refactorcategory.model.Revision;
 
 public class GitEntry implements Entry {
 
-  //GitEntryDifference entryDifference;
+  // GitEntryDifference entryDifference;
   AbbreviatedObjectId id;
   FileMode mode;
   String path;
@@ -45,12 +46,11 @@ public class GitEntry implements Entry {
   }
 
   public Ast getCompilationUnit(Revision revision, String name, byte[] content) {
-    Ast ast = new Ast();
+    
     GitRevision gitRevision = (GitRevision) revision;
     ByteArrayInputStream bis = new ByteArrayInputStream(content);
     try {
-      ast.setAstNode(gitRevision.getProgram().getJavaParser().parse(bis, name));
-      return ast;
+      return new Ast(gitRevision.getProgram().getJavaParser().parse(bis, name));
     } catch (IOException | Exception e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -72,9 +72,22 @@ public class GitEntry implements Entry {
   }
 
   @Override
-  public String getRawText(Range<Long> range) {
-    // TODO Auto-generated method stub
-    return null;
+  public RawText getRawText(Range<Long> range) {
+    int startLine = ASTNode.getLine(range.getStart().intValue())-1;
+    int endLine = ASTNode.getLine(range.getEnd().intValue());
+    int startColumn = ASTNode.getColumn(range.getStart().intValue()-1);
+    int endColumn = ASTNode.getColumn(range.getEnd().intValue());
+    String lines = rawText.getString(startLine, endLine, false);
+    int lastindex = lines.lastIndexOf('\n', lines.length());
+    if (lastindex != -1 && !rawText.isMissingNewlineAtEnd()) {
+      lastindex = lines.lastIndexOf('\n', lastindex - 1);
+    }
+    if (lastindex == -1) {
+      lastindex = 0;
+    }
+    String substring = lines.substring(startColumn, lastindex + endColumn);
+    RawText result = new RawText(substring.getBytes());
+    return result;
   }
 
   public byte[] open() throws MissingObjectException, IOException {

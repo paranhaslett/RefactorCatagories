@@ -23,35 +23,46 @@ import com.paranhaslett.refactorcategory.Range;
 public class TextDrillDown implements DrillDown {
 
   @Override
-  public List<Difference> drilldown(Difference difference) throws MissingObjectException, IOException {
-    
+  public List<Difference> drilldown(Difference difference)
+      throws MissingObjectException, IOException {
+
+    List<Difference> results = new ArrayList<Difference>();
+
     CodeBlock oldCb = difference.getOldCb();
-    CodeBlock newb = difference.getNewCb();
-     
-   
-    
-   RawText oldRaw = difference.getOldCb().getEntry().getRawText();
-   RawText newRaw = difference.getOldCb().getEntry().getRawText();
+    CodeBlock newCb = difference.getNewCb();
+
+    RawText oldRaw = oldCb.getEntry().getRawText(oldCb.getBlock());
+    RawText newRaw = newCb.getEntry().getRawText(newCb.getBlock());
 
     EditList editList = DiffAlgorithm
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
             RawTextComparator.WS_IGNORE_ALL, oldRaw, newRaw);
-    
-    for (Edit edit:editList){
-      Range<Long> editRangeA = convertEditRange(edit.getBeginA(),edit.getEndA());
-      System.out.println(difference.getOldCb().getEntry().getRawText(editRangeA));
+
+    // Convert Edit List to a list of differences
+    for (Edit edit : editList) {
+      try {
+        Difference diff = (Difference) difference.clone();
+
+        Range<Long> oldRange = convertEditRange(edit.getBeginA(),
+            edit.getEndA());
+        Range<Long> newRange = convertEditRange(edit.getBeginB(),
+            edit.getEndB());
+
+        diff.getOldCb().setBlock(oldRange);
+        diff.getNewCb().setBlock(newRange);
+        results.add(diff);
+      } catch (CloneNotSupportedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
     }
-    
-    
-    //if it is java
-    //do the java difference
-  
-    return new ArrayList<Difference>();
+
+    return results;
   }
-  
-  private Range<Long> convertEditRange(int start, int end){
-    long rangeStart = (long)ASTNode.makePosition(start,0);
-    long rangeEnd = (long)ASTNode.makePosition(end, 0);
+
+  private Range<Long> convertEditRange(int start, int end) {
+    long rangeStart = (long) ASTNode.makePosition(start, 0);
+    long rangeEnd = (long) ASTNode.makePosition(end, 0);
     return new Range<Long>(rangeStart, rangeEnd);
   }
 
@@ -96,7 +107,8 @@ public class TextDrillDown implements DrillDown {
     return score;
   }
 
-  public List<Difference> matchup(List<Difference> differences) throws MissingObjectException, IOException {
+  public List<Difference> matchup(List<Difference> differences)
+      throws MissingObjectException, IOException {
 
     // split up differences according to type
     List<Difference> inserts = new ArrayList<Difference>();
@@ -129,7 +141,7 @@ public class TextDrillDown implements DrillDown {
           diff.setNewCb(inserts.get(ins).getNewCb());
           diff.setType(Type.MODIFY);
 
-          List<Difference> scoreList = drilldown(diff);
+          List<Difference> scoreList = new ArrayList<Difference>();// drilldown(diff);
 
           for (Difference scoreDiff : scoreList) {
             score += scoreDiff.getOldCb().getBlock().getEnd()

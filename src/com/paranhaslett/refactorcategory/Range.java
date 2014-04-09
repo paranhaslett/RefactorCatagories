@@ -1,6 +1,11 @@
 package com.paranhaslett.refactorcategory;
 
-public class Range <T extends Comparable<T>>{
+public class Range <T extends Comparable<T>> implements Cloneable{
+
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    return super.clone();
+  }
 
   private T end;
   private T start;

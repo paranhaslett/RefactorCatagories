@@ -20,36 +20,38 @@ import com.paranhaslett.refactorcategory.git.GitRevision;
 public class RepoDrillDown implements DrillDown {
 
   @Override
-  public List<Difference> drilldown(Difference difference) throws IOException, GitAPIException {
+  public List<Difference> drilldown(Difference difference) throws IOException,
+      GitAPIException {
     List<Difference> result = new ArrayList<Difference>();
-    
+
     FileRepositoryBuilder builder = new FileRepositoryBuilder();
-    Repository repo = builder.setGitDir(new File("/home/paran/Documents/Test/Jasm/.git"))
-    .readEnvironment().findGitDir().build();
-    
-    ((GitRepo)GitRepo.getRepo()).setRepo(repo);
-    
+    Repository repo = builder
+        .setGitDir(new File("/home/paran/Documents/Test/Jasm/.git"))
+        .readEnvironment().findGitDir().build();
+
+    ((GitRepo) GitRepo.getRepo()).setRepo(repo);
 
     RevWalk walk = new RevWalk(repo);
     walk.markStart(walk.parseCommit(repo.resolve("HEAD")));
     RevCommit newRc = null;
     for (Iterator<RevCommit> iterator = walk.iterator(); iterator.hasNext();) {
-        RevCommit oldRc = iterator.next();
-        if (newRc != null){
-         GitRevision newGr = new GitRevision(newRc);
-         GitRevision oldGr = new GitRevision(oldRc);
-         
-         //GitRepo.getRepo().setCurrentRevision(oldGr, newGr);
-         
-         CodeBlock oldCb = new CodeBlock();
-         CodeBlock newCb = new CodeBlock();
-         
-         oldCb.setRevision(oldGr);
-         newCb.setRevision(newGr);
-         
-         Difference diff = new Difference(newCb, oldCb);
-         result = new RevisionDrillDown().drilldown(diff);       }
-        newRc = oldRc;
+      RevCommit oldRc = iterator.next();
+      if (newRc != null) {
+        GitRevision newGr = new GitRevision(newRc);
+        GitRevision oldGr = new GitRevision(oldRc);
+
+        // GitRepo.getRepo().setCurrentRevision(oldGr, newGr);
+
+        CodeBlock oldCb = new CodeBlock();
+        CodeBlock newCb = new CodeBlock();
+
+        oldCb.setRevision(oldGr);
+        newCb.setRevision(newGr);
+
+        Difference diff = new Difference(newCb, oldCb);
+        result.addAll(new RevisionDrillDown().drilldown(diff));
+      }
+      newRc = oldRc;
     }
     return result;
   }
