@@ -45,17 +45,9 @@ public class GitEntry implements Entry {
     this.diffEntry = diffEntry;
   }
 
-  public Ast getCompilationUnit(Revision revision, String name, byte[] content) {
-    
+  public Ast getCompilationUnit(Revision revision, String name, byte[] content) { 
     GitRevision gitRevision = (GitRevision) revision;
-    ByteArrayInputStream bis = new ByteArrayInputStream(content);
-    try {
-      return new Ast(gitRevision.getProgram().getJavaParser().parse(bis, name));
-    } catch (IOException | Exception e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    return null;
+      return new Ast(gitRevision.getProgram().getCompilationUnit(name, content));
   }
 
   public AbbreviatedObjectId getId() {

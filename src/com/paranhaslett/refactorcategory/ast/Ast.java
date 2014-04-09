@@ -49,13 +49,7 @@ public class Ast implements Cloneable{
     List<Ast> result = new ArrayList<Ast>();
     for (int i=0; i <numChild; i++){
       Ast child = new Ast();
-      try{
-       child.setAstNode(astNode.getChild(i));
-      } catch (NullPointerException npe){
-        npe.printStackTrace();
-        System.out.println("Debug");
-        child.setAstNode(new ASTNode());
-      }
+      child.setAstNode(astNode.getChild(i));  
       result.add(child);
     }   
     return result;
