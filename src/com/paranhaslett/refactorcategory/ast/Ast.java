@@ -33,11 +33,18 @@ public class Ast implements Cloneable{
     if(obj instanceof Ast){
       Ast ast = (Ast)obj;
       if(astNode != null && ast.astNode!=null){
-        return astNode.dumpString().equals(ast.astNode.dumpString());
+        return true;
+        /*
+        if (astNode.dumpString().equals(ast.astNode.dumpString())){
+          if (!(astNode instanceof AST.List) && !(astNode instanceof AST.Opt)){
+            return astNode.toString().equals(ast.astNode.toString());
+          } else {
+            return true;
+          }
+        } */
       }
     }
-    // TODO Auto-generated method stub
-    return super.equals(obj);
+    return false;
   }
 
   public ASTNode<ASTNode> getAstNode() {

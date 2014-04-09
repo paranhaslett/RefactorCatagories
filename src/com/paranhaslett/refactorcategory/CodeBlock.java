@@ -84,10 +84,27 @@ public class CodeBlock implements Cloneable {
   public void setRevision(Revision revision) {
     this.revision = revision;
   }
+  
+  public String getRawText(){
+    return entry.getRawText(block).toString();
+  }
 
   @Override
   public String toString() {
-    // TODO Auto-generated method stub
-    return super.toString();
+    StringBuilder sb = new StringBuilder();
+    if(revision != null){
+      sb.append(revision.getName().substring(0,10));
+      sb.append(":");
+      if(entry != null){
+        String path = entry.getPath();
+        int index = path.lastIndexOf("/");
+        sb.append(path.substring(index));
+        sb.append(":");
+        if(block != null){
+          sb.append(block);
+        }
+      }
+    }
+    return sb.toString();
   }
 }

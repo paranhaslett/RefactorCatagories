@@ -73,8 +73,10 @@ public class Difference implements Cloneable{
 
   @Override
   public String toString() {
-    // TODO Auto-generated method stub
-    return super.toString();
+    StringBuilder sb = new StringBuilder();
+    sb.append(language).append(":").append(type).append(":");
+    sb.append(oldCb).append(" to ").append(newCb);
+    return sb.toString();
   }
 
   @Override

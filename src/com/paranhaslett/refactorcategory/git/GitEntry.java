@@ -71,8 +71,8 @@ public class GitEntry implements Entry {
     int endColumn = ASTNode.getColumn(range.getEnd().intValue());
     String lines = rawText.getString(startLine, endLine, false);
     int lastindex = lines.lastIndexOf('\n', lines.length());
-    if (lastindex != -1 && !rawText.isMissingNewlineAtEnd()) {
-      lastindex = lines.lastIndexOf('\n', lastindex - 1);
+    if (lastindex != -1) {
+      lastindex = lines.lastIndexOf('\n', lastindex -1);
     }
     if (lastindex == -1) {
       lastindex = 0;
