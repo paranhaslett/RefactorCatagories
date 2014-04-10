@@ -1,6 +1,5 @@
 package com.paranhaslett.refactorcategory.git;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -18,7 +17,6 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.storage.pack.PackConfig;
 
 import AST.ASTNode;
-import beaver.Parser.Exception;
 
 import com.paranhaslett.refactorcategory.Range;
 import com.paranhaslett.refactorcategory.ast.Ast;
@@ -32,6 +30,7 @@ public class GitEntry implements Entry {
   FileMode mode;
   String path;
   RawText rawText;
+  byte[] content;
   Side side;
   Ast compilationUnit;
   DiffEntry diffEntry;
@@ -45,10 +44,11 @@ public class GitEntry implements Entry {
     this.diffEntry = diffEntry;
   }
 
+  /*
   public Ast getCompilationUnit(Revision revision, String name, byte[] content) { 
     GitRevision gitRevision = (GitRevision) revision;
       return new Ast(gitRevision.getProgram().getCompilationUnit(name, content));
-  }
+  }*/
 
   public AbbreviatedObjectId getId() {
     return id;
@@ -82,11 +82,11 @@ public class GitEntry implements Entry {
     return result;
   }
 
-  public byte[] open() throws MissingObjectException, IOException {
-    byte[] bytes;
+  public void open() throws MissingObjectException, IOException {
+    //byte[] bytes;
 
     if (mode == FileMode.MISSING || mode.getObjectType() != Constants.OBJ_BLOB) {
-      bytes = GitEntryDifference.EMPTY;
+      content = GitEntryDifference.EMPTY;
     } else {
 
       if (!id.isComplete()) {
@@ -104,13 +104,13 @@ public class GitEntry implements Entry {
         ObjectLoader ldr = ((GitRepo) GitRepo.getRepo()).source.open(side,
             diffEntry);
 
-        bytes = ldr.getBytes(PackConfig.DEFAULT_BIG_FILE_THRESHOLD);
-        rawText = new RawText(bytes);
+        content = ldr.getBytes(PackConfig.DEFAULT_BIG_FILE_THRESHOLD);
+        rawText = new RawText(content);
 
       } catch (LargeObjectException.ExceedsLimit
           | LargeObjectException.ExceedsByteArrayLimit
           | LargeObjectException.OutOfMemory overLimit) {
-        bytes = GitEntryDifference.BINARY;
+        content = GitEntryDifference.BINARY;
 
       } catch (LargeObjectException tooBig) {
         tooBig.setObjectId(id.toObjectId());
@@ -118,9 +118,9 @@ public class GitEntry implements Entry {
       }
     }
 
-    rawText = new RawText(bytes);
+    rawText = new RawText(content);
 
-    return bytes;
+    //return bytes;
   }
 
   public void setId(AbbreviatedObjectId id) {
@@ -129,6 +129,17 @@ public class GitEntry implements Entry {
 
   public void setPath(String path) {
     this.path = path;
+  }
+
+  @Override
+  public Ast getCompilationUnit(Revision revision, String name) {
+    GitRevision gitRevision = (GitRevision) revision;
+    return new Ast(gitRevision.getProgram().getCompilationUnit(name, content));
+  }
+
+  @Override
+  public byte[] getContent() {
+    return content;
   }
 
 }

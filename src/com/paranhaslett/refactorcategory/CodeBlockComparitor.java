@@ -12,7 +12,7 @@ public abstract class CodeBlockComparitor extends
         int bi) {
       CodeBlock cba = a.children.get(ai);
       CodeBlock cbb = b.children.get(bi);
-      return cba.equals(cbb);
+      return cba.dumpEquals(cbb);
     }
 
     @Override

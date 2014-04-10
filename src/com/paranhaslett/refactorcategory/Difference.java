@@ -4,19 +4,19 @@ import com.paranhaslett.refactorcategory.model.Repo;
 
 public class Difference implements Cloneable{
   public enum Language {
-    COMMENT, PLAIN_TEXT, VALID_JAVA
+    UNKNOWN, COMMENT, VALID_JAVA, BINARY
   }
 
   public enum Type {
-    BINARY, COPY, DELETE, EMPTY, INSERT, MODIFY, MOVE, RENAMED, REPLACE, VISIBILITY_REDUCTION, EQUIVALENT
+    UNKNOWN, BINARY, COPY, DELETE, EMPTY, INSERT, MODIFY, MOVE, RENAMED, REPLACE, VISIBILITY_REDUCTION, EQUIVALENT
   }
 
-  Language language;
+  Language language = Language.UNKNOWN;
   CodeBlock newCb;
   CodeBlock oldCb;
   Repo Repo;
   double score;
-  Type type;
+  Type type = Type.UNKNOWN;
   
   public Difference(CodeBlock oldCb, CodeBlock newCb){
     this.newCb = newCb;

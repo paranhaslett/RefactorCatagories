@@ -8,19 +8,18 @@ import AST.ASTNode;
 import com.paranhaslett.refactorcategory.Range;
 import com.paranhaslett.refactorcategory.Ranges;
 
-public class Ast implements Cloneable{
+public class Ast implements Cloneable {
   ASTNode<ASTNode> astNode;
-  
-  public Ast(ASTNode<ASTNode> astNode){
-    this.astNode =astNode;
+
+  public Ast(ASTNode<ASTNode> astNode) {
+    this.astNode = astNode;
   }
-  
-  public Ast(){
-    
+
+  public Ast() {
+
   }
 
   // com.paranhaslett.refactorcategory.ast.Ast.content() content()
-
 
   @Override
   public int hashCode() {
@@ -28,20 +27,14 @@ public class Ast implements Cloneable{
     return super.hashCode();
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if(obj instanceof Ast){
-      Ast ast = (Ast)obj;
-      if(astNode != null && ast.astNode!=null){
+  /*
+   * This is only very crude as it figures out the equivilence for the drill
+   * down stage only
+   */
+  public boolean dumpEquals(Ast ast) {
+    if (astNode != null && ast.astNode != null) {
+      if (astNode.dumpString().equals(ast.astNode.dumpString())) {
         return true;
-        /*
-        if (astNode.dumpString().equals(ast.astNode.dumpString())){
-          if (!(astNode instanceof AST.List) && !(astNode instanceof AST.Opt)){
-            return astNode.toString().equals(ast.astNode.toString());
-          } else {
-            return true;
-          }
-        } */
       }
     }
     return false;
@@ -50,26 +43,26 @@ public class Ast implements Cloneable{
   public ASTNode<ASTNode> getAstNode() {
     return astNode;
   }
-  
+
   public List<Ast> getChildren() {
     int numChild = astNode.getNumChild();
     List<Ast> result = new ArrayList<Ast>();
-    for (int i=0; i <numChild; i++){
+    for (int i = 0; i < numChild; i++) {
       Ast child = new Ast();
-      child.setAstNode(astNode.getChild(i));  
+      child.setAstNode(astNode.getChild(i));
       result.add(child);
-    }   
+    }
     return result;
   }
-  
-  public Long getStart(){
+
+  public Long getStart() {
     return (long) astNode.getStart();
   }
 
   public Range<Long> getRange() {
     return new Range<Long>((long) astNode.getStart(), (long) astNode.getEnd());
   }
-  
+
   public Ranges<Long> getRanges() {
     Ranges<Long> result = new Ranges<Long>();
     result.add((long) astNode.getStart(), (long) astNode.getEnd());
@@ -104,5 +97,5 @@ public class Ast implements Cloneable{
   public Object clone() throws CloneNotSupportedException {
     return super.clone();
   }
-  
+
 }

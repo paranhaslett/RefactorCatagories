@@ -8,6 +8,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 
 import com.paranhaslett.refactorcategory.Difference;
+import com.paranhaslett.refactorcategory.Difference.Language;
 import com.paranhaslett.refactorcategory.Difference.Type;
 import com.paranhaslett.refactorcategory.git.GitEntryDifference;
 import com.paranhaslett.refactorcategory.git.GitRepo;
@@ -44,6 +45,7 @@ public class RevisionDrillDown implements DrillDown {
 
         if (oldEnt.getPath().endsWith(".class")
             || newEnt.getPath().endsWith(".class")) {
+          diff.setLanguage(Language.BINARY);
           diff.setType(Type.BINARY);
         }
         switch (diff.getType()) {

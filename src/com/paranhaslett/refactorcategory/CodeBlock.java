@@ -1,5 +1,7 @@
 package com.paranhaslett.refactorcategory;
 
+import AST.ASTNode;
+
 import com.paranhaslett.refactorcategory.ast.Ast;
 import com.paranhaslett.refactorcategory.model.Entry;
 import com.paranhaslett.refactorcategory.model.Revision;
@@ -8,7 +10,6 @@ public class CodeBlock implements Cloneable {
   private Ast ast;
   private Range<Long> block;
   private Ranges<Long> blocks;
-  
 
   private Entry entry;
   private Revision revision;
@@ -17,27 +18,22 @@ public class CodeBlock implements Cloneable {
   public Object clone() throws CloneNotSupportedException {
     CodeBlock clone = (CodeBlock) super.clone();
     if (block != null) {
-      clone.block = (Range<Long>)(block.clone());
+      clone.block = (Range<Long>) (block.clone());
     }
-    if (ast != null){
-      clone.ast = (Ast)(ast.clone());
+    if (ast != null) {
+      clone.ast = (Ast) (ast.clone());
     }
     return super.clone();
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof CodeBlock) {
-      CodeBlock cb = (CodeBlock) obj;
-      if (ast != null && cb != null && cb.ast != null) {
-        // It is a java segment so do am AST comparison
-        return cb.ast.equals(ast);
-      } else {
-        // It is a text or comment segment so do a RawText comparison
-        return entry.getRawText(block).equals(cb.entry.getRawText(cb.block));
-      }
+  public boolean dumpEquals(CodeBlock cb) {
+    if (ast != null && cb != null && cb.ast != null) {
+      // It is a java segment so do am AST comparison
+      return cb.ast.dumpEquals(ast);
+    } else {
+      // It is a text or comment segment so do a RawText comparison
+      return getRawText().equals(cb.getRawText());
     }
-    return false;
   }
 
   public Ast getAst() {
@@ -55,6 +51,7 @@ public class CodeBlock implements Cloneable {
   public Entry getEntry() {
     return entry;
   }
+
   public Revision getRevision() {
     return revision;
   }
@@ -85,22 +82,55 @@ public class CodeBlock implements Cloneable {
     this.revision = revision;
   }
   
+  /*
   public String getRawText(){
-    return entry.getRawText(block).toString();
-  }
+    StringBuilder sb = new StringBuilder();
+    byte[] foo =entry.getContent();
+    for (int pos = block.getStart().intValue(); pos<block.getEnd(); pos ++){
+      sb.append(foo[pos]);
+    }
+    return sb.toString();
+  } */
+
+  
+  public String getRawText() {
+    int startLine = ASTNode.getLine(block.getStart().intValue()) - 1;
+    int endLine = ASTNode.getLine(block.getEnd().intValue());
+    int startColumn = ASTNode.getColumn(block.getStart().intValue()) - 1;
+    int endColumn = ASTNode.getColumn(block.getEnd().intValue());
+
+    System.out.println("[" + startLine + ":" + startColumn + " - " + endLine
+        + ":" + endColumn + "]");
+    String lines = entry.getRawText().getString(startLine, endLine, false);
+    System.out.println(lines.intern());
+    if (lines.endsWith("\n")) {
+      lines = lines.substring(0, lines.length() - 1);
+    }
+    int lastindex = lines.lastIndexOf('\n', lines.length());
+    if (lastindex == -1) {
+      lastindex = 0;
+    }
+    String substring = null;
+    try {
+      substring = lines.substring(startColumn, lastindex + endColumn);
+    } catch (StringIndexOutOfBoundsException sioobe) {
+      sioobe.printStackTrace();
+    }
+    return substring;
+  } 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    if(revision != null){
-      sb.append(revision.getName().substring(0,10));
+    if (revision != null) {
+      sb.append(revision.getName().substring(0, 10));
       sb.append(":");
-      if(entry != null){
+      if (entry != null) {
         String path = entry.getPath();
         int index = path.lastIndexOf("/");
         sb.append(path.substring(index));
         sb.append(":");
-        if(block != null){
+        if (block != null) {
           sb.append(block);
         }
       }

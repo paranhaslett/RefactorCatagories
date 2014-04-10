@@ -23,6 +23,10 @@ public class Range <T extends Comparable<T>> implements Cloneable{
   public boolean contains(Range<T> range) {
     return (range.start.compareTo(start)>-1 && range.end.compareTo(end)<1);
   }
+  
+  public boolean isEmpty(){
+    return start.compareTo(end)==0;
+  }
 
   public boolean contains(T value) {
     return (value.compareTo(start)>-1 && value.compareTo(end)<1);

@@ -31,8 +31,38 @@ public class TextDrillDown implements DrillDown {
     CodeBlock oldCb = difference.getOldCb();
     CodeBlock newCb = difference.getNewCb();
 
-    RawText oldRaw = oldCb.getEntry().getRawText(oldCb.getBlock());
-    RawText newRaw = newCb.getEntry().getRawText(newCb.getBlock());
+    RawText oldRaw = new RawText (oldCb.getEntry().getContent());
+    RawText newRaw = new RawText (newCb.getEntry().getContent());
+    
+    /*
+
+    RawText oldRaw = oldCb.getEntry().getRawText();
+    RawText newRaw = newCb.getEntry().getRawText();
+
+    EditList editList = DiffAlgorithm
+        .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
+            RawTextComparator.WS_IGNORE_ALL, oldRaw, newRaw);
+
+    // Convert Edit List to a list of differences
+    List<Difference> textDiffs = new ArrayList<Difference>();
+    for (Edit edit : editList) {
+      try {
+        Difference diff = (Difference) difference.clone();
+
+        Range<Long> oldRange = convertEditRange(edit.getBeginA(),
+            edit.getEndA());
+        Range<Long> newRange = convertEditRange(edit.getBeginB(),
+            edit.getEndB());
+
+        diff.getOldCb().setBlock(oldRange);
+        diff.getNewCb().setBlock(newRange);
+
+        textDiffs.add(diff);
+      } catch (CloneNotSupportedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    } */
 
     EditList editList = DiffAlgorithm
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(

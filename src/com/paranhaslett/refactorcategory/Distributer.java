@@ -25,13 +25,8 @@ public class Distributer {
       e.printStackTrace();
     }
     
-    for (Difference diff:results){
-        System.out.println(diff);
-        if (diff.language == Language.VALID_JAVA){
-        System.out.println(diff.getOldCb().getRawText());
-        System.out.println(diff.getNewCb().getRawText());
-      }
-    }
+    Calculator calc = Calculator.getCalc();
+    calc.printReport();
     
   }
 }
