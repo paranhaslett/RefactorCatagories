@@ -6,29 +6,23 @@ import java.util.List;
 import AST.ASTNode;
 
 import com.paranhaslett.refactorcategory.Range;
-import com.paranhaslett.refactorcategory.Ranges;
 
 public class Ast implements Cloneable {
-  ASTNode<ASTNode> astNode;
+  private ASTNode<ASTNode> astNode;
 
   public Ast(ASTNode<ASTNode> astNode) {
     this.astNode = astNode;
-  }
-
-  public Ast() {
-
   }
 
   // com.paranhaslett.refactorcategory.ast.Ast.content() content()
 
   @Override
   public int hashCode() {
-    // TODO Auto-generated method stub
-    return super.hashCode();
+    return astNode.dumpString().hashCode();
   }
 
   /*
-   * This is only very crude as it figures out the equivilence for the drill
+   * This is only very crude as it figures out the equivalence for the drill
    * down stage only
    */
   public boolean dumpEquals(Ast ast) {
@@ -39,17 +33,23 @@ public class Ast implements Cloneable {
     }
     return false;
   }
-
-  public ASTNode<ASTNode> getAstNode() {
-    return astNode;
+  
+  public boolean equalTypes(Ast ast){
+    if (astNode != null && ast.astNode != null) {
+      String classA = getAstType(this);
+      String classB = getAstType(ast);
+      if (classA.equals(classB)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public List<Ast> getChildren() {
     int numChild = astNode.getNumChild();
     List<Ast> result = new ArrayList<Ast>();
     for (int i = 0; i < numChild; i++) {
-      Ast child = new Ast();
-      child.setAstNode(astNode.getChild(i));
+      Ast child = new Ast(astNode.getChild(i));
       result.add(child);
     }
     return result;
@@ -62,11 +62,13 @@ public class Ast implements Cloneable {
   public Range<Long> getRange() {
     return new Range<Long>((long) astNode.getStart(), (long) astNode.getEnd());
   }
-
-  public Ranges<Long> getRanges() {
-    Ranges<Long> result = new Ranges<Long>();
-    result.add((long) astNode.getStart(), (long) astNode.getEnd());
-    return result;
+  
+  public String prettyPrint(){
+    if (!(astNode instanceof AST.List)
+        && !(astNode instanceof AST.Opt)){
+      return astNode.toString();
+    } 
+    return null;
   }
 
   public boolean isEmpty() {
@@ -89,13 +91,20 @@ public class Ast implements Cloneable {
 
   @Override
   public String toString() {
-    // TODO Auto-generated method stub
-    return super.toString();
+    return astNode.dumpString();
   }
 
   @Override
   public Object clone() throws CloneNotSupportedException {
     return super.clone();
   }
+  
+  private String getAstType(Ast ast){
+    Class<?> enclosingClass = ast.astNode.getClass().getEnclosingClass();
+    if (enclosingClass != null) {
+      return astNode.getClass().getEnclosingClass().getName();
+    } else 
+      return astNode.getClass().getName();
+    }
+  }
 
-}

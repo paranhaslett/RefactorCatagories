@@ -14,7 +14,7 @@ import com.paranhaslett.refactorcategory.git.GitEntryDifference;
 import com.paranhaslett.refactorcategory.git.GitRepo;
 import com.paranhaslett.refactorcategory.model.Entry;
 
-public class RevisionDrillDown implements DrillDown {
+public class RevisionDrillDown extends DrillDown {
 
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
@@ -52,6 +52,7 @@ public class RevisionDrillDown implements DrillDown {
         case COPY:
         case RENAMED:
         case MODIFY:
+          System.out.println(oldEnt.getPath() + " to " + newEnt.getPath());
           modify.addAll(new EntryDrillDown().drilldown(diff));
           break;
         case DELETE:

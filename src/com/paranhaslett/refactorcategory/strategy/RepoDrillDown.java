@@ -17,7 +17,7 @@ import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.git.GitRepo;
 import com.paranhaslett.refactorcategory.git.GitRevision;
 
-public class RepoDrillDown implements DrillDown {
+public class RepoDrillDown extends DrillDown {
 
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,

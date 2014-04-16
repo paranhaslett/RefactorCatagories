@@ -12,7 +12,8 @@ public abstract class  AstComparitor extends SequenceComparator<AstSequence> {
         int bi) {
       Ast asta = a.children.get(ai);
       Ast astb = b.children.get(bi);
-      return asta.dumpEquals(astb);
+      //TODO get a better comparison
+      return asta.equalTypes(astb) && asta.dumpEquals(astb);
     }
 
     @Override

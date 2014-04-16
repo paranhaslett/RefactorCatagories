@@ -35,47 +35,49 @@ public class GitEntryDifference {
       .fromObjectId(ObjectId.zeroId());
 
   private RenameDetector renameDetector;
-  
 
   public GitEntryDifference() {
     super();
   }
 
-  public static List<Difference> getEntries(Difference difference) throws IOException {
+  public static List<Difference> getEntries(Difference difference)
+      throws IOException {
 
-   
-    
-    ((GitRepo)GitRepo.getRepo()).makeReader();
+    ((GitRepo) GitRepo.getRepo()).makeReader();
 
-    CanonicalTreeParser oldCtp = ((GitRevision)difference.getOldCb().getRevision()).getCtp(((GitRepo)GitRepo.getRepo()).reader);
-    CanonicalTreeParser newCtp = ((GitRevision)difference.getNewCb().getRevision()).getCtp(((GitRepo)GitRepo.getRepo()).reader);
+    CanonicalTreeParser oldCtp = ((GitRevision) difference.getOldCb()
+        .getRevision()).getCtp(((GitRepo) GitRepo.getRepo()).reader);
+    CanonicalTreeParser newCtp = ((GitRevision) difference.getNewCb()
+        .getRevision()).getCtp(((GitRepo) GitRepo.getRepo()).reader);
 
-    TreeWalk walk = new TreeWalk(((GitRepo)GitRepo.getRepo()).reader);
+    TreeWalk walk = new TreeWalk(((GitRepo) GitRepo.getRepo()).reader);
     walk.addTree(oldCtp);
     walk.addTree(newCtp);
     walk.setRecursive(true);
 
-    ((GitRepo)GitRepo.getRepo()).source = new ContentSource.Pair(source(oldCtp), source(newCtp));
+    ((GitRepo) GitRepo.getRepo()).source = new ContentSource.Pair(
+        source(oldCtp), source(newCtp));
 
     if (walk.getTreeCount() != 2)
       throw new IllegalArgumentException(
           JGitText.get().treeWalkMustHaveExactlyTwoTrees);
-    
+
     List<DiffEntry> files = DiffEntry.scan(walk);
-    
-    
+
     GitEntryDifference gbe = new GitEntryDifference();
     gbe.setDetectRenames(true);
     files = gbe.detectRenames(files);
-    
-    //convert diffEntry into Differences  
+
+    // convert diffEntry into Differences
     List<Difference> results = new ArrayList<Difference>();
-    for (DiffEntry ent: files){
-      Entry oldEnt = new GitEntry(ent.getOldId(),ent.getMode(Side.OLD),ent.getOldPath(),Side.OLD,ent);
-      Entry newEnt = new GitEntry(ent.getNewId(),ent.getMode(Side.NEW),ent.getNewPath(),Side.NEW,ent);
+    for (DiffEntry ent : files) {
+      Entry oldEnt = new GitEntry(ent.getOldId(),
+          ent.getOldPath(), Side.OLD, ent);
+      Entry newEnt = new GitEntry(ent.getNewId(),
+          ent.getNewPath(), Side.NEW, ent);
       try {
         Difference diff = (Difference) difference.clone();
-        switch (ent.getChangeType()){
+        switch (ent.getChangeType()) {
         case ADD:
           diff.setType(Type.INSERT);
           break;
@@ -85,58 +87,58 @@ public class GitEntryDifference {
         case MODIFY:
           diff.setType(Type.MODIFY);
           break;
-        case  RENAME:
+        case RENAME:
           diff.setType(Type.RENAMED);
           break;
         case COPY:
           diff.setType(Type.COPY);
           break;
         }
-        
+
         diff.getNewCb().setEntry(newEnt);
         diff.getOldCb().setEntry(oldEnt);
         results.add(diff);
       } catch (CloneNotSupportedException e) {
-        // TODO Auto-generated catch block
+        // This should not happen as clone of Difference and CodeBlock are valid
         e.printStackTrace();
       }
     }
-    
+
     return results;
 
   }
-  
+
   private static ContentSource source(AbstractTreeIterator iterator) {
     if (iterator instanceof WorkingTreeIterator) {
       return ContentSource.create((WorkingTreeIterator) iterator);
     }
-    return ContentSource.create(((GitRepo)GitRepo.getRepo()).reader);
+    return ContentSource.create(((GitRepo) GitRepo.getRepo()).reader);
   }
-  
 
   public void setDetectRenames(boolean on) {
-      if (on && renameDetector == null) {
-          renameDetector = new RenameDetector(((GitRepo)GitRepo.getRepo()).repository);
-      } else if (!on)
-          renameDetector = null;
+    if (on && renameDetector == null) {
+      renameDetector = new RenameDetector(
+          ((GitRepo) GitRepo.getRepo()).repository);
+    } else if (!on)
+      renameDetector = null;
   }
 
   /** @return the rename detector if rename detection is enabled. */
   public RenameDetector getRenameDetector() {
-      return renameDetector;
+    return renameDetector;
   }
-  
+
   /** @return true if rename detection is enabled. */
   public boolean isDetectRenames() {
-      return renameDetector != null;
+    return renameDetector != null;
   }
+
   private List<DiffEntry> detectRenames(List<DiffEntry> files)
       throws IOException {
-  renameDetector.reset();
-  renameDetector.addAll(files);
-  return renameDetector.compute(((GitRepo)GitRepo.getRepo()).reader, NullProgressMonitor.INSTANCE);
-}
- 
-
+    renameDetector.reset();
+    renameDetector.addAll(files);
+    return renameDetector.compute(((GitRepo) GitRepo.getRepo()).reader,
+        NullProgressMonitor.INSTANCE);
+  }
 
 }

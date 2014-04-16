@@ -24,31 +24,22 @@ import com.paranhaslett.refactorcategory.model.Entry;
 import com.paranhaslett.refactorcategory.model.Revision;
 
 public class GitEntry implements Entry {
+  private AbbreviatedObjectId id;
+  private String path;
+  private RawText rawText;
+  private byte[] content;
+  private Side side;
+  private DiffEntry diffEntry;
+  
+  
 
-  // GitEntryDifference entryDifference;
-  AbbreviatedObjectId id;
-  FileMode mode;
-  String path;
-  RawText rawText;
-  byte[] content;
-  Side side;
-  Ast compilationUnit;
-  DiffEntry diffEntry;
-
-  public GitEntry(AbbreviatedObjectId id, FileMode mode, String path,
+  public GitEntry(AbbreviatedObjectId id, String path,
       Side side, DiffEntry diffEntry) {
     this.id = id;
-    this.mode = mode;
     this.path = path;
     this.side = side;
     this.diffEntry = diffEntry;
   }
-
-  /*
-  public Ast getCompilationUnit(Revision revision, String name, byte[] content) { 
-    GitRevision gitRevision = (GitRevision) revision;
-      return new Ast(gitRevision.getProgram().getCompilationUnit(name, content));
-  }*/
 
   public AbbreviatedObjectId getId() {
     return id;
@@ -83,9 +74,9 @@ public class GitEntry implements Entry {
   }
 
   public void open() throws MissingObjectException, IOException {
-    //byte[] bytes;
 
-    if (mode == FileMode.MISSING || mode.getObjectType() != Constants.OBJ_BLOB) {
+    if (diffEntry.getMode(side) == FileMode.MISSING 
+        || diffEntry.getMode(side).getObjectType() != Constants.OBJ_BLOB) {
       content = GitEntryDifference.EMPTY;
     } else {
 
@@ -119,8 +110,6 @@ public class GitEntry implements Entry {
     }
 
     rawText = new RawText(content);
-
-    //return bytes;
   }
 
   public void setId(AbbreviatedObjectId id) {

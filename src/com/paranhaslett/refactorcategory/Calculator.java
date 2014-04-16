@@ -27,6 +27,10 @@ public class Calculator {
     oldDifferences.addAll(differences);
   }
   
+  public void addOldDifference(Difference difference){
+    oldDifferences.add(difference);
+  }
+  
 public void addNewDifferences(List<Difference> differences){
     newDifferences.addAll(differences);
   }
@@ -68,13 +72,13 @@ public void addNewDifferences(List<Difference> differences){
                 }
                 if (newcount < 3){
                   System.out.println("-----" + diff.getOldCb() + "-----");
-                  if(diff.getOldCb().getBlock().getStart() < 1){
+                  if(diff.getOldCb().getBlock().getStart() < 1 || diff.getOldCb().getBlock().getEnd() < 1 ){
                     System.out.println(diff);
                   } else {
                     System.out.println(diff.getOldCb().getRawText());
                   }
                   System.out.println(">>>>>" +  diff.getNewCb() + ">>>>>");
-                  if(diff.getNewCb().getBlock().getStart() < 1){
+                  if(diff.getNewCb().getBlock().getStart() < 1 || diff.getNewCb().getBlock().getEnd() < 1){
                     System.out.println(diff);
                   } else {
                     System.out.println(diff.getNewCb().getRawText());

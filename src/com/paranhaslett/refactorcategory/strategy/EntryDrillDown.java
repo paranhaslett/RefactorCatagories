@@ -18,11 +18,12 @@ import com.paranhaslett.refactorcategory.Calculator;
 import com.paranhaslett.refactorcategory.CodeBlock;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Language;
+import com.paranhaslett.refactorcategory.Difference.Type;
 import com.paranhaslett.refactorcategory.Range;
 import com.paranhaslett.refactorcategory.ast.Ast;
 import com.paranhaslett.refactorcategory.model.Entry;
 
-public class EntryDrillDown implements DrillDown {
+public class EntryDrillDown extends DrillDown {
 
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
@@ -35,8 +36,6 @@ public class EntryDrillDown implements DrillDown {
     Entry oldEnt = oldCb.getEntry();
     Entry newEnt = newCb.getEntry();
 
-    System.out.println(oldEnt.getPath() + " to " + newEnt.getPath());
-
     newEnt.open();
     oldEnt.open();
 
@@ -48,78 +47,70 @@ public class EntryDrillDown implements DrillDown {
 
     oldCb.setBlock(convertEditRange(0, oldRaw.size()));
     newCb.setBlock(convertEditRange(0, newRaw.size()));
+    
+    Ast oldAst = null;
+    Ast newAst = null;
+    
+    if (oldPath.endsWith(".java")){
+      oldAst = oldEnt.getCompilationUnit(oldCb.getRevision(), oldPath);
+      oldCb.setAst(oldAst);       
+    }
+    
+    if (newPath.endsWith(".java")) {
+      newAst = newEnt.getCompilationUnit(newCb.getRevision(), newPath);
+      newCb.setAst(newAst);
+    }
+    
+    if (oldAst != null && newAst != null){    
+      difference.setLanguage(Language.VALID_JAVA);
+    }
 
     EditList editList = DiffAlgorithm
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
             RawTextComparator.WS_IGNORE_ALL, oldRaw, newRaw);
 
     // Convert Edit List into lists of differences
-    List<Difference> modifies = new ArrayList<Difference>();
+   // List<Difference> modifies = new ArrayList<Difference>();
     List<Difference> inserts = new ArrayList<Difference>();
     List<Difference> deletes = new ArrayList<Difference>();
-    
+
     for (Edit edit : editList) {
-      try {
-        Difference diff = (Difference) difference.clone();
 
-        Range<Long> oldRange = convertEditRange(edit.getBeginA(),
-            edit.getEndA());
-        Range<Long> newRange = convertEditRange(edit.getBeginB(),
-            edit.getEndB());
+      Difference diff = createDiff(difference, Type.UNKNOWN, 0.0);
 
-        diff.getOldCb().setBlock(oldRange);
-        diff.getNewCb().setBlock(newRange);
-        
-        switch(edit.getType()){
-        case INSERT:
-          diff.setType(Difference.Type.INSERT);
-          inserts.add(diff);
-          break;
-        case DELETE:
-          diff.setType(Difference.Type.DELETE);
-          deletes.add(diff);
-          break;
-        case REPLACE:
-          diff.setType(Difference.Type.MODIFY);
-          modifies.add(diff);
-          break;
-        default:
-          break;
-        }
-      } catch (CloneNotSupportedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-    }
+      Range<Long> oldRange = convertEditRange(edit.getBeginA() + 1, edit.getEndA() + 1);
+      Range<Long> newRange = convertEditRange(edit.getBeginB() + 1, edit.getEndB() + 1);
 
-    //do the modifies first
-    
-    if (modifies.size() > 0 && oldPath.endsWith(".java")
-        && newPath.endsWith(".java")) {
-      Ast oldAst = oldEnt.getCompilationUnit(oldCb.getRevision(), oldPath);
-      Ast newAst = newEnt.getCompilationUnit(newCb.getRevision(), newPath);
-      oldCb.setAst(oldAst);
-      newCb.setAst(newAst);
+      diff.getOldCb().setBlock(oldRange);
+      diff.getNewCb().setBlock(newRange);
       
-      Calculator calc = Calculator.getCalc();
-      calc.addOldDifferences(modifies);
-      
+     
 
-      for (Difference diff : modifies) {
-        try {
-          diff.getOldCb().setAst((Ast) oldAst.clone());
-          diff.getNewCb().setAst((Ast) newAst.clone());
-          diff.setLanguage(Language.VALID_JAVA);
-          System.out.println("------");
+      switch (edit.getType()) {
+      case INSERT:
+        diff.setType(Difference.Type.INSERT);
+        inserts.add(diff);
+        break;
+      case DELETE:
+        diff.setType(Difference.Type.DELETE);
+        deletes.add(diff);
+        break;
+      case REPLACE:
+        diff.setType(Difference.Type.MODIFY);
+        if (oldAst != null && newAst != null){       
+          // do the modifies first
+          Calculator calc = Calculator.getCalc();
+          calc.addOldDifference(diff);
           List<Difference> javaDiffs = new JavaDrillDown().drilldown(diff);
           results.addAll(javaDiffs);
           calc.addNewDifferences(javaDiffs);
-        } catch (CloneNotSupportedException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
         }
+        break;
+      default:
+        break;
       }
     }
+    results.addAll(new CodeBlockDrillDown().matchup(inserts, deletes));
     return results;
   }
 
@@ -128,5 +119,4 @@ public class EntryDrillDown implements DrillDown {
     long rangeEnd = (long) ASTNode.makePosition(end, 1);
     return new Range<Long>(rangeStart, rangeEnd);
   }
-
 }

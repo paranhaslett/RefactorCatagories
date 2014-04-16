@@ -1,8 +1,10 @@
 package com.paranhaslett.refactorcategory.strategy;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffAlgorithm;
 import org.eclipse.jgit.diff.DiffAlgorithm.SupportedAlgorithm;
 import org.eclipse.jgit.diff.Edit;
@@ -11,17 +13,18 @@ import org.eclipse.jgit.diff.EditList;
 import com.paranhaslett.refactorcategory.CodeBlock;
 import com.paranhaslett.refactorcategory.CodeBlockComparitor;
 import com.paranhaslett.refactorcategory.CodeBlockSequence;
+import com.paranhaslett.refactorcategory.Config;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Language;
 import com.paranhaslett.refactorcategory.Difference.Type;
 import com.paranhaslett.refactorcategory.Range;
-import com.paranhaslett.refactorcategory.Ranges;
 import com.paranhaslett.refactorcategory.ast.Ast;
+import com.paranhaslett.refactorcategory.ast.CommentAst;
 
-public class JavaDrillDown implements DrillDown {
+public class JavaDrillDown extends DrillDown {
 
   @Override
-  public List<Difference> drilldown(Difference difference) {
+  public List<Difference> drilldown(Difference difference) throws IOException, GitAPIException {
 
     /* Get all the children differences */
 
@@ -44,6 +47,7 @@ public class JavaDrillDown implements DrillDown {
     int newindex = 0;
 
     List<Difference> others = new ArrayList<Difference>();
+    List<Difference> modifies = new ArrayList<Difference>();
     List<Difference> inserts = new ArrayList<Difference>();
     List<Difference> deletes = new ArrayList<Difference>();
 
@@ -60,21 +64,36 @@ public class JavaDrillDown implements DrillDown {
         Range<Integer> editB = new Range<Integer>(edit.getBeginB(),
             edit.getEndB());
 
-        if (!editA.isEmpty() && editA.contains(oldindex)) {
-          Difference childDiff = createChild(difference, oldCmp, newCmp,
-              Type.DELETE);
-          System.out.println("DELETE:" + oldCmp.getRawText());
+        if (!editA.isEmpty() && !editB.isEmpty()
+            && editA.getEnd() - editA.getStart() == 1
+            && editB.getEnd() - editB.getStart() == 1
+            && editA.contains(oldindex) && editB.contains(newindex)) {
+          Difference childDiff = createDiff(difference, oldCmp, newCmp,
+              Type.MODIFY, Config.scoreUnit * 2);
           oldindex++;
-          deletes.add(childDiff);
-          isInEditList = true;
-        }
-        if (!editB.isEmpty() && editB.contains(newindex)) {
-          Difference childDiff = createChild(difference, oldCmp, newCmp,
-              Type.INSERT);
-          System.out.println("INSERT:" + newCmp.getRawText());
-          inserts.add(childDiff);
           newindex++;
+          modifies.add(childDiff);
+          //TODO check for rename modification
           isInEditList = true;
+          
+        } else {
+
+          if (!editA.isEmpty() && editA.contains(oldindex)) {
+            Difference childDiff = createDiff(difference, oldCmp, newCmp,
+                Type.DELETE, Config.scoreUnit);
+             //System.out.println("DELETE:" + oldCmp.getRawText());
+            oldindex++;
+            deletes.add(childDiff);
+            isInEditList = true;
+          }
+          if (!editB.isEmpty() && editB.contains(newindex)) {
+            Difference childDiff = createDiff(difference, oldCmp, newCmp,
+                Type.INSERT, Config.scoreUnit);
+            //System.out.println("INSERT:" + newCmp.getRawText());
+            inserts.add(childDiff);
+            newindex++;
+            isInEditList = true;
+          }
         }
         if (isInEditList) {
           break;
@@ -91,239 +110,73 @@ public class JavaDrillDown implements DrillDown {
           Range<Long> newCmpBlock = newCmp.getAst().getRange();
           Range<Long> oldCbBlock = oldCb.getBlock();
           Range<Long> newCbBlock = newCb.getBlock();
-          
-          Difference childDiff = createChild(difference, oldCmp, newCmp,
-              Type.EQUIVALENT);
+
+          Difference childDiff = createDiff(difference, oldCmp, newCmp,
+              Type.EQUIVALENT, 0.0);
 
           if (oldCbBlock.contains(oldCmpBlock)
-              && newCbBlock.contains(newCmpBlock)) {         
-            others.addAll(new AstDrillDown().drilldown(childDiff));
+              && newCbBlock.contains(newCmpBlock)) {
+           
+            List <Difference> collated = collate(childDiff, new AstDrillDown().drilldown(childDiff));
+            others.addAll(collated);
           } else {
             others.addAll(drilldown(childDiff));
+            // no need to match up if it is simply a drilldown
+            return others;
           }
-        } 
+        }
       }
     }
 
-    List<Difference> result = others;
-    result.addAll(deletes);
-    result.addAll(inserts);
-    return result;
+    // TODO split up comments and java differences and test separately
+    List<Difference> commentInserts = new ArrayList<Difference>();
+    List<Difference> javaInserts = new ArrayList<Difference>();
+    for (Difference diff:inserts){
+      if(diff.getOldCb().getAst() != null && diff.getNewCb().getAst() !=null){
+        javaInserts.add(diff);
+      } 
+      
+      if (diff.getOldCb().getAst() == null && diff.getNewCb().getAst() ==null){
+        commentInserts.add(diff);
+      }
+    }
+    
+    List<Difference> commentDeletes = new ArrayList<Difference>();
+    List<Difference> javaDeletes = new ArrayList<Difference>();
+    for (Difference diff:deletes){
+      if(diff.getOldCb().getAst() != null && diff.getNewCb().getAst() !=null){
+        javaDeletes.add(diff);
+      } 
+      
+      if (diff.getOldCb().getAst() == null && diff.getNewCb().getAst() ==null){
+        commentDeletes.add(diff);
+      }
+    }
+    
+    others.addAll(new TextDrillDown().matchup(commentInserts, commentDeletes));
+    others.addAll(matchup(javaInserts, javaDeletes));
+    others.addAll(modifies);
+    return others;
   }
 
-  private Difference createChild(Difference difference, CodeBlock oldCmp,
-      CodeBlock newCmp, Type type) {
-    try {
-      Difference childDiff = (Difference) difference.clone();
-      childDiff.setOldCb((CodeBlock) oldCmp.clone());
-      childDiff.setNewCb((CodeBlock) newCmp.clone());
-      childDiff.setType(type);
+  Difference createDiff(Difference difference, CodeBlock oldCmp,
+      CodeBlock newCmp, Type type, double score) {
+      Difference childDiff = super.createDiff(difference, type, score);
+      childDiff.setOldCb(oldCmp);
+      childDiff.setNewCb(newCmp);
       if (areJavaBlocks(oldCmp, newCmp)) {
         childDiff.setLanguage(Language.VALID_JAVA);
       } else {
         childDiff.setLanguage(Language.COMMENT);
       }
       return childDiff;
-    } catch (CloneNotSupportedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      return null;
-    }
   }
 
   private boolean areJavaBlocks(CodeBlock oldCmp, CodeBlock newCmp) {
     return oldCmp.getAst() != null && newCmp.getAst() != null
-        && !oldCmp.getAst().isEmpty() && !newCmp.getAst().isEmpty();
-  }
-
-  private List<Difference> isAstInBlocks(Difference difference) {
-    CodeBlock oldCb = difference.getOldCb();
-    CodeBlock newCb = difference.getNewCb();
-
-    Ast oldAst = oldCb.getAst();
-    Ast newAst = newCb.getAst();
-
-    /** is the Ast fully inside a block? */
-
-    Range<Long> oldAstR = oldAst.getRange();
-    Range<Long> newAstR = newAst.getRange();
-    List<Difference> result = new ArrayList<Difference>();
-    boolean oldPartInRange = false;
-    boolean newPartInRange = false;
-
-    boolean oldInRange = false;
-    boolean newInRange = false;
-
-    Range<Long> oldBlock = oldCb.getBlock();
-    Range<Long> newBlock = newCb.getBlock();
-
-    if (oldBlock.intersects(oldAstR)) {
-      oldPartInRange = true;
-      if (oldBlock.contains(oldAstR)) {
-        oldInRange = true;
-      }
-    }
-
-    if (newBlock.intersects(newAstR)) {
-      newPartInRange = true;
-      if (newBlock.contains(newAstR)) {
-        newInRange = true;
-      }
-    }
-
-    if (!oldPartInRange) {
-      if (!newPartInRange) {
-        // this one is not interesting
-        // return an empty result
-        return result;
-      }
-      difference.setType(Type.INSERT);
-      if (newInRange) {
-        // this one IS interesting
-        // return insert difference
-        result.add(difference);
-        return result;
-      }
-    } else {
-      if (!newPartInRange) {
-        difference.setType(Type.DELETE);
-        if (oldInRange) {
-          // this one IS interesting
-          // return delete difference
-          result.add(difference);
-          return result;
-        }
-      } else {
-        difference.setType(Type.MODIFY);
-        if (oldInRange && newInRange) {
-          // this one IS interesting
-          // return modify difference
-          result.add(difference);
-          return result;
-        }
-      }
-    }
-    // if we get here we need to drilldown some more
-    // result = needtodd(difference);
-    return result;
-  }
-
-  private List<Difference> isAstInBlocks(Difference parent,
-      List<Difference> compareAgainst) {
-    CodeBlock oldCb = parent.getOldCb();
-    CodeBlock newCb = parent.getNewCb();
-
-    Ast oldAst = oldCb.getAst();
-    Ast newAst = newCb.getAst();
-
-    /** is the Ast fully inside a block? */
-
-    Range<Long> oldAstR = oldAst.getRange();
-    Range<Long> newAstR = newAst.getRange();
-    List<Difference> result = new ArrayList<Difference>();
-    boolean oldPartInRange = false;
-    boolean newPartInRange = false;
-
-    boolean oldInRange = false;
-    boolean newInRange = false;
-
-    for (Difference range : compareAgainst) {
-      Range<Long> oldBlock = range.getOldCb().getBlock();
-      Range<Long> newBlock = range.getNewCb().getBlock();
-
-      if (oldBlock.intersects(oldAstR)) {
-        oldPartInRange = true;
-        if (oldBlock.contains(oldAstR)) {
-          oldInRange = true;
-        }
-      }
-
-      if (newBlock.intersects(newAstR)) {
-        newPartInRange = true;
-        if (newBlock.contains(newAstR)) {
-          newInRange = true;
-        }
-      }
-    }
-
-    if (!oldPartInRange) {
-      if (!newPartInRange) {
-        // this one is not interesting
-        // return an empty result
-        return result;
-      }
-      parent.setType(Type.INSERT);
-      if (newInRange) {
-        // this one IS interesting
-        // return insert difference
-        result.add(parent);
-        return result;
-      }
-    } else {
-      if (!newPartInRange) {
-        parent.setType(Type.DELETE);
-        if (oldInRange) {
-          // this one IS interesting
-          // return delete difference
-          result.add(parent);
-          return result;
-        }
-      } else {
-        parent.setType(Type.MODIFY);
-        if (oldInRange && newInRange) {
-          // this one IS interesting
-          // return modify difference
-          result.add(parent);
-          return result;
-        }
-      }
-    }
-    // if we get here we need to drilldown some more
-    // result = needtodd(parent);
-    return result;
-  }
-
-  private List<CodeBlock> getChildrens(CodeBlock cb) {
-    List<CodeBlock> children = new ArrayList<CodeBlock>();
-
-    resolveEmptyAsts(cb);
-
-    long minStart = cb.getAst().getStart();
-
-    for (Ast child : cb.getAst().getChildren()) {
-
-      try {
-
-        Ranges<Long> javaAst = child.getRanges();
-
-        if (javaAst.intersects(cb.getBlocks())) {
-          CodeBlock javaCb = (CodeBlock) cb.clone();
-          javaAst = javaAst.intersection(cb.getBlocks());
-          javaCb.setBlocks(javaAst);
-          javaCb.setAst(child);
-          children.add(javaCb);
-        }
-        if (minStart < child.getRange().getStart() - 1) {
-          Ranges<Long> commentAst = new Ranges<Long>();
-          commentAst.add(minStart, (long) (child.getStart() - 1));
-          if (commentAst.intersects(cb.getBlocks())) {
-            CodeBlock commentCb = (CodeBlock) cb.clone();
-            commentAst = commentAst.intersection(cb.getBlocks());
-            commentCb.setBlocks(commentAst);
-            commentCb.setAst(null);
-            children.add(commentCb);
-
-          }
-        }
-
-      } catch (CloneNotSupportedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      minStart = child.getRange().getEnd() + 1;
-    }
-
-    return children;
+        && !oldCmp.getAst().isEmpty() && !newCmp.getAst().isEmpty()
+        && !(oldCmp.getAst() instanceof CommentAst)
+        && !(newCmp.getAst() instanceof CommentAst);
   }
 
   private List<CodeBlock> getChildren(CodeBlock cb) {
@@ -348,21 +201,23 @@ public class JavaDrillDown implements DrillDown {
 
         }
         if (minStart < child.getRange().getStart() - 1) {
-          Range<Long> commentAst = new Range<Long>(minStart, (long) (child
+          Range<Long> commentRange = new Range<Long>(minStart, (long) (child
               .getRange().getStart() - 1));
 
-          if (commentAst.intersects(cb.getBlock())) {
+          if (commentRange.intersects(cb.getBlock())) {
             CodeBlock commentCb = (CodeBlock) cb.clone();
-            commentAst = commentAst.getIntersection(cb.getBlock());
-            commentCb.setBlock(commentAst);
-            commentCb.setAst(null);
+            commentRange = commentRange.getIntersection(cb.getBlock());
+            commentCb.setBlock(commentRange);
+            commentCb.setAst(null);// new CommentAst(commentCb.getRawText(),
+                                   // commentRange.getStart(),
+                                   // commentRange.getEnd()));
             children.add(commentCb);
 
           }
         }
 
       } catch (CloneNotSupportedException e) {
-        // TODO Auto-generated catch block
+        // This should not happen as clone of Difference and CodeBlock are valid
         e.printStackTrace();
       }
       minStart = child.getRange().getEnd() + 1;
@@ -393,99 +248,9 @@ public class JavaDrillDown implements DrillDown {
       previous.setEnd(cb.getAst().getRange().getEnd());
     }
   }
-
-  public List<Difference> matchup(List<Difference> differences) {
-
-    // split up differences according to type
-    List<Difference> inserts = new ArrayList<Difference>();
-    List<Difference> deletes = new ArrayList<Difference>();
-    List<Difference> others = new ArrayList<Difference>();
-
-    for (Difference diff : differences) {
-      if (diff.getType() == Type.INSERT) {
-        inserts.add(diff);
-      } else {
-        if (diff.getType() == Type.DELETE) {
-          deletes.add(diff);
-        } else {
-          others.add(diff);
-        }
-      }
-    }
-
-    List<List<Difference>> grid = new ArrayList<List<Difference>>();
-
-    // find all potential matches for deletes and inserts
-    for (int ins = 0; ins < inserts.size(); ins++) {
-      List<Difference> rows = new ArrayList<Difference>();
-      for (int del = 0; del < deletes.size(); del++) {
-        long score = 0;
-        try {
-          Difference diff = (Difference) inserts.get(ins).clone();
-
-          diff.setOldCb(deletes.get(del).getOldCb());
-          diff.setNewCb(inserts.get(ins).getNewCb());
-          diff.setType(Type.MODIFY);
-
-          List<Difference> scoreList = drilldown(diff);
-
-          for (Difference scoreDiff : scoreList) {
-            score += scoreDiff.getOldCb().getBlock().getEnd()
-                - scoreDiff.getOldCb().getBlock().getStart();
-            score += scoreDiff.getNewCb().getBlock().getEnd()
-                - scoreDiff.getNewCb().getBlock().getStart();
-          }
-
-          long base = diff.getOldCb().getBlock().getEnd()
-              - diff.getOldCb().getBlock().getStart();
-          base += diff.getNewCb().getBlock().getEnd()
-              - diff.getNewCb().getBlock().getStart();
-          if (base != 0) {
-            diff.setScore(score / base);
-
-          } else {
-            diff.setScore(score * 2);
-          }
-          rows.add(diff);
-        } catch (CloneNotSupportedException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-      }
-      grid.add(rows);
-    }
-
-    others.addAll(getBestScores(grid));
-    return others;
+  
+  public String debug (){
+    return null;
   }
-
-  private List<Difference> getBestScores(List<List<Difference>> grid) {
-    List<Difference> result = new ArrayList<Difference>();
-    Difference lowest = null;
-    int lowestRow = 0;
-    int lowestCol = 0;
-    for (int ins = 0; ins < grid.size(); ins++) {
-      for (int del = 0; del < grid.get(ins).size(); del++) {
-        Difference score = grid.get(ins).get(del);
-        if (lowest == null || lowest.getScore() > score.getScore()) {
-          lowest = score;
-          lowestRow = ins;
-          lowestCol = del;
-        }
-      }
-    }
-    if (lowest != null) {
-
-      grid.remove(lowestRow);
-      for (int ins = 0; ins < grid.size(); ins++) {
-        grid.get(ins).remove(lowestCol);
-      }
-      if (grid.size() > 0 && grid.get(0).size() > 0) {
-        result.addAll(getBestScores(grid));
-      }
-      result.add(lowest);
-    }
-    return result;
-  }
-
 }
+

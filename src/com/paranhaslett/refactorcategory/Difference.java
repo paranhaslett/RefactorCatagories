@@ -10,13 +10,18 @@ public class Difference implements Cloneable{
   public enum Type {
     UNKNOWN, BINARY, COPY, DELETE, EMPTY, INSERT, MODIFY, MOVE, RENAMED, REPLACE, VISIBILITY_REDUCTION, EQUIVALENT
   }
+  
+  public enum Legality {
+    UNKNOWN, DUBIOUS, LEGAL, ILLEGAL
+  }
 
-  Language language = Language.UNKNOWN;
-  CodeBlock newCb;
-  CodeBlock oldCb;
-  Repo Repo;
-  double score;
-  Type type = Type.UNKNOWN;
+  private Language language = Language.UNKNOWN;
+  private CodeBlock newCb;
+  private CodeBlock oldCb;
+  private Legality legality;
+  private Repo Repo;
+  private double score;
+  private Type type = Type.UNKNOWN;
   
   public Difference(CodeBlock oldCb, CodeBlock newCb){
     this.newCb = newCb;
@@ -29,6 +34,14 @@ public class Difference implements Cloneable{
 
   public CodeBlock getNewCb() {
     return newCb;
+  }
+
+  public Legality getLegality() {
+    return legality;
+  }
+
+  public void setLegality(Legality legality) {
+    this.legality = legality;
   }
 
   public CodeBlock getOldCb() {

@@ -82,37 +82,28 @@ public class CodeBlock implements Cloneable {
     this.revision = revision;
   }
   
-  /*
-  public String getRawText(){
-    StringBuilder sb = new StringBuilder();
-    byte[] foo =entry.getContent();
-    for (int pos = block.getStart().intValue(); pos<block.getEnd(); pos ++){
-      sb.append(foo[pos]);
-    }
-    return sb.toString();
-  } */
-
-  
   public String getRawText() {
     int startLine = ASTNode.getLine(block.getStart().intValue()) - 1;
     int endLine = ASTNode.getLine(block.getEnd().intValue());
-    int startColumn = ASTNode.getColumn(block.getStart().intValue()) - 1;
+    int startColumn = ASTNode.getColumn(block.getStart().intValue())-1;
     int endColumn = ASTNode.getColumn(block.getEnd().intValue());
 
-    System.out.println("[" + startLine + ":" + startColumn + " - " + endLine
-        + ":" + endColumn + "]");
+    //System.out.println("[" + startLine + ":" + startColumn + " - " + endLine
+    //    + ":" + endColumn + "]");
     String lines = entry.getRawText().getString(startLine, endLine, false);
-    System.out.println(lines.intern());
+    //System.out.println(lines.intern());
+    int startOfLastRow = lines.length();
     if (lines.endsWith("\n")) {
-      lines = lines.substring(0, lines.length() - 1);
+      startOfLastRow -= 2;
+      //lines = lines.substring(0, lines.length() - 1);
     }
-    int lastindex = lines.lastIndexOf('\n', lines.length());
-    if (lastindex == -1) {
-      lastindex = 0;
+    startOfLastRow = lines.lastIndexOf('\n', startOfLastRow) + 1;
+    if (startOfLastRow == -1) {
+      startOfLastRow = 0;
     }
     String substring = null;
     try {
-      substring = lines.substring(startColumn, lastindex + endColumn);
+      substring = lines.substring(startColumn, startOfLastRow + endColumn);
     } catch (StringIndexOutOfBoundsException sioobe) {
       sioobe.printStackTrace();
     }
