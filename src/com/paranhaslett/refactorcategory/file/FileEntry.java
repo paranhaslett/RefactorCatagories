@@ -48,7 +48,6 @@ public class FileEntry implements Entry {
       inputStream.close();
       this.rawText = new RawText(content);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }

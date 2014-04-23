@@ -21,7 +21,6 @@ public class Tools {
       few.write(cu.toString());
       few.close();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
@@ -36,13 +35,10 @@ public class Tools {
         cu.setParent(prog);
         return cu;
       } catch (FileNotFoundException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (IOException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (beaver.Parser.Exception e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       }
       return null;

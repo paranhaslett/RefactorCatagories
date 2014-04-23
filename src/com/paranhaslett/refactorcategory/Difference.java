@@ -4,7 +4,7 @@ import com.paranhaslett.refactorcategory.model.Repo;
 
 public class Difference implements Cloneable{
   public enum Language {
-    UNKNOWN, COMMENT, VALID_JAVA, BINARY
+    UNKNOWN, COMMENT, WHITESPACE, JAVA, BINARY
   }
 
   public enum Type {

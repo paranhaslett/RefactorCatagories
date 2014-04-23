@@ -1,4 +1,4 @@
-package com.paranhaslett.refactorcategory;
+package com.paranhaslett.refactorcategory.compare;
 
 import java.util.List;
 

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.paranhaslett.refactorcategory.Range;
-import com.paranhaslett.refactorcategory.Ranges;
 
 public class CommentAst extends Ast implements Cloneable {
   private String text;
@@ -38,12 +37,6 @@ public class CommentAst extends Ast implements Cloneable {
 
   public Range<Long> getRange() {
     return new Range<Long>(start, end);
-  }
-
-  public Ranges<Long> getRanges() {
-    Ranges<Long> result = new Ranges<Long>();
-    result.add(start, end);
-    return result;
   }
 
   public boolean isEmpty() {

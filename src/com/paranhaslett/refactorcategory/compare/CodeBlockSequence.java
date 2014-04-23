@@ -1,8 +1,11 @@
-package com.paranhaslett.refactorcategory;
+package com.paranhaslett.refactorcategory.compare;
 
 import java.util.List;
 
 import org.eclipse.jgit.diff.Sequence;
+
+import com.paranhaslett.refactorcategory.CodeBlock;
+
 
 public class CodeBlockSequence extends Sequence {
   List<CodeBlock> children;

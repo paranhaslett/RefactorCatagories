@@ -18,40 +18,51 @@ import com.paranhaslett.refactorcategory.git.GitRepo;
 import com.paranhaslett.refactorcategory.git.GitRevision;
 
 public class RepoDrillDown extends DrillDown {
+  private String repoFileName;
+
+  public void setRepo(String filename) {
+    this.repoFileName = filename;
+  }
 
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
     List<Difference> result = new ArrayList<Difference>();
+    if (repoFileName == null) {
+      throw new IOException("Repository or filename not set");
+    } else {
 
-    FileRepositoryBuilder builder = new FileRepositoryBuilder();
-    Repository repo = builder
-        .setGitDir(new File("/home/paran/Documents/Test/Jasm/.git"))
-        .readEnvironment().findGitDir().build();
+      if (repoFileName.endsWith(".git")) {
 
-    ((GitRepo) GitRepo.getRepo()).setRepo(repo);
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        Repository repo = builder.setGitDir(new File(repoFileName))
+            .readEnvironment().findGitDir().build();
 
-    RevWalk walk = new RevWalk(repo);
-    walk.markStart(walk.parseCommit(repo.resolve("HEAD")));
-    RevCommit newRc = null;
-    for (Iterator<RevCommit> iterator = walk.iterator(); iterator.hasNext();) {
-      RevCommit oldRc = iterator.next();
-      if (newRc != null) {
-        GitRevision newGr = new GitRevision(newRc);
-        GitRevision oldGr = new GitRevision(oldRc);
+        ((GitRepo) GitRepo.getRepo()).setRepo(repo);
 
-        // GitRepo.getRepo().setCurrentRevision(oldGr, newGr);
+        RevWalk walk = new RevWalk(repo);
+        walk.markStart(walk.parseCommit(repo.resolve("HEAD")));
+        RevCommit newRc = null;
+        for (Iterator<RevCommit> iterator = walk.iterator(); iterator.hasNext();) {
+          RevCommit oldRc = iterator.next();
+          if (newRc != null) {
+            GitRevision newGr = new GitRevision(newRc);
+            GitRevision oldGr = new GitRevision(oldRc);
 
-        CodeBlock oldCb = new CodeBlock();
-        CodeBlock newCb = new CodeBlock();
+            // GitRepo.getRepo().setCurrentRevision(oldGr, newGr);
 
-        oldCb.setRevision(oldGr);
-        newCb.setRevision(newGr);
+            CodeBlock oldCb = new CodeBlock();
+            CodeBlock newCb = new CodeBlock();
 
-        Difference diff = new Difference(newCb, oldCb);
-        result.addAll(new RevisionDrillDown().drilldown(diff));
+            oldCb.setRevision(oldGr);
+            newCb.setRevision(newGr);
+
+            Difference diff = new Difference(newCb, oldCb);
+            result.addAll(new RevisionDrillDown().drilldown(diff));
+          }
+          newRc = oldRc;
+        }  
       }
-      newRc = oldRc;
     }
     return result;
   }

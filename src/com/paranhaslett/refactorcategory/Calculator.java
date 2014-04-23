@@ -40,15 +40,14 @@ public void addNewDifferences(List<Difference> differences){
     
       for(Language lang: Language.values()){    
         for(Type type:Type.values()){
-          int oldcount = 0;
-          
+          int oldcount = 0;         
           for (Difference diff:oldDifferences){
             if(diff.getLanguage() == lang){
               if(diff.getType() == type){
-               
+              
                 if (oldcount < 1 ){
                   System.out.println();
-                  System.out.println("OLD:" +lang + ":" + type);
+                  System.out.println("GIT DIFF:" +lang + ":" + type);
                   System.out.println("====================================");
                 }
                 if (oldcount < 3){ 
@@ -66,9 +65,9 @@ public void addNewDifferences(List<Difference> differences){
           for (Difference diff:newDifferences){
             if(diff.getLanguage() == lang){
               if(diff.getType() == type){    
-                if (newcount < 1 ){
+               if (newcount < 1 ){
                   System.out.println();
-                  System.out.println("NEW:" +lang + ":" + type);
+                  System.out.println("REFACTOR CATEGORIES:" +lang + ":" + type);
                 }
                 if (newcount < 3){
                   System.out.println("-----" + diff.getOldCb() + "-----");

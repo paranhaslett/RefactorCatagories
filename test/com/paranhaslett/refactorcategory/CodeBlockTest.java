@@ -99,7 +99,7 @@ public class CodeBlockTest {
   }
 
   @Test
-  public void testGetRawText() {
+  public void testGetRawText() throws CloneNotSupportedException {
     Revision fileRevision = new FileRevision();
     fileRevision.setProgram();
     Entry fileEntry = new FileEntry("/home/paran/Main.java");
@@ -121,8 +121,8 @@ public class CodeBlockTest {
     }
   }
 
-  private void testAllChildren(CodeBlock cb) {
-    if (cb.getBlock().getStart()<1 || cb.getBlock().getEnd()<1){
+  private void testAllChildren(CodeBlock cb) throws CloneNotSupportedException {
+    if (cb.getBlock().getStart() < 1 || cb.getBlock().getEnd() < 1) {
       return;
     }
     List<Ast> children = cb.getAst().getChildren();
@@ -130,40 +130,35 @@ public class CodeBlockTest {
     System.out.println(cb.getAst().prettyPrint());
     System.out.println("------------------------");
     System.out.println(cb.getRawText());
-    
-    if (cb.getAst().prettyPrint() != null){
+
+    if (cb.getAst().prettyPrint() != null) {
       whatIsDifferent(cb.getAst().prettyPrint(), cb.getRawText());
-    
+
       assertEquals(cb.getAst().prettyPrint(), cb.getRawText());
     }
     for (Ast child : children) {
-      try {
-        CodeBlock chcb = (CodeBlock) cb.clone();
-        chcb.setAst(child);
-        chcb.setBlock(child.getRange());
-        System.out.println("Range" + child.getRange());
-        testAllChildren(chcb);
-      } catch (CloneNotSupportedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
+      CodeBlock chcb = (CodeBlock) cb.clone();
+      chcb.setAst(child);
+      chcb.setBlock(child.getRange());
+      System.out.println("Range" + child.getRange());
+      testAllChildren(chcb);
+
     }
   }
-  
-  private boolean whatIsDifferent(String stra, String strb){
+
+  private boolean whatIsDifferent(String stra, String strb) {
     boolean result = false;
-    
-   
-    if(stra.length() !=strb.length()){
+
+    if (stra.length() != strb.length()) {
       System.out.println("Different length");
       System.out.println(stra.length());
       System.out.println(strb.length());
-      for (int i = strb.length()-1; i<stra.length(); i++){
-        System.out.print( stra.charAt(i));
+      for (int i = strb.length() - 1; i < stra.length(); i++) {
+        System.out.print(stra.charAt(i));
       }
     } else {
-      for (int i = 0; i<strb.length(); i++){
-        if (!stra.substring(i, i+1).equals(strb.substring(i,i+1))){
+      for (int i = 0; i < strb.length(); i++) {
+        if (!stra.substring(i, i + 1).equals(strb.substring(i, i + 1))) {
           System.out.print(stra.charAt(i) + " not " + strb.charAt(i));
           result = true;
         } else {

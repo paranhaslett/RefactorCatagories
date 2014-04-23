@@ -52,7 +52,7 @@ public class RevisionDrillDown extends DrillDown {
         case COPY:
         case RENAMED:
         case MODIFY:
-          System.out.println(oldEnt.getPath() + " to " + newEnt.getPath());
+          //System.out.println(oldEnt.getPath() + " to " + newEnt.getPath());
           modify.addAll(new EntryDrillDown().drilldown(diff));
           break;
         case DELETE:

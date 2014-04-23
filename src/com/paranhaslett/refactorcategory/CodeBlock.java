@@ -9,11 +9,10 @@ import com.paranhaslett.refactorcategory.model.Revision;
 public class CodeBlock implements Cloneable {
   private Ast ast;
   private Range<Long> block;
-  private Ranges<Long> blocks;
-
   private Entry entry;
   private Revision revision;
 
+  @SuppressWarnings("unchecked")
   @Override
   public Object clone() throws CloneNotSupportedException {
     CodeBlock clone = (CodeBlock) super.clone();
@@ -44,10 +43,6 @@ public class CodeBlock implements Cloneable {
     return block;
   }
 
-  public Ranges<Long> getBlocks() {
-    return blocks;
-  }
-
   public Entry getEntry() {
     return entry;
   }
@@ -56,22 +51,12 @@ public class CodeBlock implements Cloneable {
     return revision;
   }
 
-  @Override
-  public int hashCode() {
-    // TODO Auto-generated method stub
-    return super.hashCode();
-  }
-
   public void setAst(Ast ast) {
     this.ast = ast;
   }
 
   public void setBlock(Range<Long> block) {
     this.block = block;
-  }
-
-  public void setBlocks(Ranges<Long> blocks) {
-    this.blocks = blocks;
   }
 
   public void setEntry(Entry entry) {
@@ -114,7 +99,7 @@ public class CodeBlock implements Cloneable {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     if (revision != null) {
-      sb.append(revision.getName().substring(0, 10));
+      sb.append(revision.getName().substring(0, 15));
       sb.append(":");
       if (entry != null) {
         String path = entry.getPath();

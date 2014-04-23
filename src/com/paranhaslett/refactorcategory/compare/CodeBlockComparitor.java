@@ -1,6 +1,8 @@
-package com.paranhaslett.refactorcategory;
+package com.paranhaslett.refactorcategory.compare;
 
 import org.eclipse.jgit.diff.SequenceComparator;
+
+import com.paranhaslett.refactorcategory.CodeBlock;
 
 public abstract class CodeBlockComparitor extends
     SequenceComparator<CodeBlockSequence> {

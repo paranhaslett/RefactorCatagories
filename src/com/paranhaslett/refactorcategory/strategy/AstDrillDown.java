@@ -10,19 +10,20 @@ import org.eclipse.jgit.diff.DiffAlgorithm.SupportedAlgorithm;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
 
-import com.paranhaslett.refactorcategory.AstComparitor;
-import com.paranhaslett.refactorcategory.AstSequence;
 import com.paranhaslett.refactorcategory.CodeBlock;
 import com.paranhaslett.refactorcategory.Config;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Type;
 import com.paranhaslett.refactorcategory.Range;
 import com.paranhaslett.refactorcategory.ast.Ast;
+import com.paranhaslett.refactorcategory.compare.AstComparitor;
+import com.paranhaslett.refactorcategory.compare.AstSequence;
 
 public class AstDrillDown extends DrillDown {
 
   @Override
-  List<Difference> drilldown(Difference difference) throws IOException, GitAPIException {
+  List<Difference> drilldown(Difference difference) throws IOException,
+      GitAPIException {
     List<Difference> result = new ArrayList<Difference>();
 
     CodeBlock oldCb = difference.getOldCb();
@@ -35,7 +36,7 @@ public class AstDrillDown extends DrillDown {
       Difference diff;
       if (newAst.equalTypes(oldAst)) {
         diff = createDiff(difference, oldAst, newAst, Type.RENAMED,
-            2 * Config.scoreUnit);
+            Config.scoreUnit);
       } else {
         diff = createDiff(difference, oldAst, newAst, Type.MODIFY,
             2 * Config.scoreUnit);
@@ -66,8 +67,8 @@ public class AstDrillDown extends DrillDown {
       } else {
         Difference diff = createDiff(difference, oldAst, newAst, Type.MODIFY,
             Config.scoreUnit * 2);
-        result = collate(diff, multipleElements(oldChildren, newChildren,
-            difference));
+        result = collate(diff,
+            multipleElements(oldChildren, newChildren, difference));
       }
     }
 
@@ -75,7 +76,8 @@ public class AstDrillDown extends DrillDown {
   }
 
   List<Difference> multipleElements(List<Ast> oldChildren,
-      List<Ast> newChildren, Difference difference) throws IOException, GitAPIException {
+      List<Ast> newChildren, Difference difference) throws IOException,
+      GitAPIException {
 
     AstSequence oldSeq = new AstSequence(oldChildren);
     AstSequence newSeq = new AstSequence(newChildren);
@@ -108,12 +110,17 @@ public class AstDrillDown extends DrillDown {
             && editA.getEnd() - editA.getStart() == 1
             && editB.getEnd() - editB.getStart() == 1
             && editA.contains(oldindex) && editB.contains(newindex)) {
-          Difference childDiff = createDiff(difference, oldCmp, newCmp,
-              Type.MODIFY, Config.scoreUnit * 2);
+          Difference childDiff;
+          if (oldCmp.equalTypes(newCmp)) {
+            childDiff = createDiff(difference, oldCmp, newCmp, Type.RENAMED,
+                Config.scoreUnit);
+          } else {
+            childDiff = createDiff(difference, oldCmp, newCmp, Type.MODIFY,
+                2 * Config.scoreUnit);
+          }
           oldindex++;
           newindex++;
           modifies.add(childDiff);
-          // TODO check for rename modification
           isInEditList = true;
         } else {
 
@@ -144,8 +151,7 @@ public class AstDrillDown extends DrillDown {
         oldindex++;
         Difference childDiff = createDiff(difference, oldCmp, newCmp,
             Type.EQUIVALENT, 0.0);
-        List<Difference> childDiffs = collate(childDiff,
-            drilldown(childDiff));
+        List<Difference> childDiffs = collate(childDiff, drilldown(childDiff));
         others.addAll(childDiffs);
       }
     }
@@ -154,25 +160,14 @@ public class AstDrillDown extends DrillDown {
     return others;
   }
 
-
   Difference createDiff(Difference difference, Ast oldAst, Ast newAst,
       Type type, double score) {
-    Difference diff = null;
-    try {
-      diff = (Difference) difference.clone();
-      diff.getNewCb().setAst(newAst);
-      diff.getOldCb().setAst(oldAst);
-      diff.getNewCb().setBlock(newAst.getRange());
-      diff.getOldCb().setBlock(oldAst.getRange());
-      diff.setType(type);
-      diff.setScore(score);
-    } catch (CloneNotSupportedException e) {
-      // This should not happen as clone of Difference and CodeBlock are valid
-      e.printStackTrace();
-    }
+    Difference diff = createDiff(difference, type, score);
+    diff.getNewCb().setAst(newAst);
+    diff.getOldCb().setAst(oldAst);
+    diff.getNewCb().setBlock(newAst.getRange());
+    diff.getOldCb().setBlock(oldAst.getRange());
     return diff;
   }
-
- 
 
 }

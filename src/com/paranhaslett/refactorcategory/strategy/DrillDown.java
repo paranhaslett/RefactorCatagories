@@ -43,8 +43,8 @@ public abstract class DrillDown {
     Difference best = null;
     int bestInsert = 0;
     int bestDelete = 0;
-    for (int ins = 1; ins < grid.size(); ins++) {
-      for (int del = 1; del < grid.get(ins).size(); del++) {
+    for (int ins = 0; ins < grid.size(); ins++) {
+      for (int del = 0; del < grid.get(ins).size(); del++) {
         Difference score = grid.get(ins).get(del);
         if (best == null || best.getScore() > score.getScore()) {
           best = score;

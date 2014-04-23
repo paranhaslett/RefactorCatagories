@@ -45,8 +45,8 @@ public class EntryDrillDown extends DrillDown {
     RawText oldRaw = oldCb.getEntry().getRawText();
     RawText newRaw = newCb.getEntry().getRawText();
 
-    oldCb.setBlock(convertEditRange(0, oldRaw.size()));
-    newCb.setBlock(convertEditRange(0, newRaw.size()));
+    oldCb.setBlock(convertEditRange(1, oldRaw.size()));
+    newCb.setBlock(convertEditRange(1, newRaw.size()));
     
     Ast oldAst = null;
     Ast newAst = null;
@@ -62,8 +62,10 @@ public class EntryDrillDown extends DrillDown {
     }
     
     if (oldAst != null && newAst != null){    
-      difference.setLanguage(Language.VALID_JAVA);
+      difference.setLanguage(Language.JAVA);
     }
+    
+    //List<Difference> textDiff = new TextDrillDown().drilldown(difference);
 
     EditList editList = DiffAlgorithm
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
@@ -109,7 +111,23 @@ public class EntryDrillDown extends DrillDown {
       default:
         break;
       }
+    } 
+    
+    /*List<Difference> modifies = filter(textDiff,Type.MODIFY);
+    for (Difference diff:modifies){
+      if (oldAst != null && newAst != null){       
+        // do the modifies first
+        Calculator calc = Calculator.getCalc();
+        calc.addOldDifference(diff);
+        List<Difference> javaDiffs = new JavaDrillDown().drilldown(diff);
+        results.addAll(javaDiffs);
+        calc.addNewDifferences(javaDiffs);
+      }
     }
+    
+    List<Difference> inserts = filter(textDiff,Type.INSERT);
+    List<Difference> deletes = filter(textDiff,Type.DELETE); */
+    
     results.addAll(new CodeBlockDrillDown().matchup(inserts, deletes));
     return results;
   }
