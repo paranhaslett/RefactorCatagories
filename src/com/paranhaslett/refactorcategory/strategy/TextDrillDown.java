@@ -11,9 +11,6 @@ import org.eclipse.jgit.diff.DiffAlgorithm;
 import org.eclipse.jgit.diff.DiffAlgorithm.SupportedAlgorithm;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
-import org.eclipse.jgit.diff.RawText;
-
-import AST.ASTNode;
 
 import com.paranhaslett.refactorcategory.CodeBlock;
 import com.paranhaslett.refactorcategory.Config;
@@ -29,6 +26,8 @@ public class TextDrillDown extends DrillDown {
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
+    
+   // System.out.println("tdd");
 
     CodeBlock oldCb = difference.getOldCb();
     CodeBlock newCb = difference.getNewCb();
@@ -66,8 +65,8 @@ public class TextDrillDown extends DrillDown {
 
     // TODO single line, multiline comment, javadoc, other
 
-    System.out.println(":" + oldStr + ":");
-    System.out.println(":" + newStr + ":");
+    //System.out.println(":" + oldStr + ":");
+    //System.out.println(":" + newStr + ":");
 
     CharacterSequence oldCs = new CharacterSequence(oldStr);
     CharacterSequence newCs = new CharacterSequence(newStr);
@@ -127,8 +126,8 @@ public class TextDrillDown extends DrillDown {
           }
          
         } else {
+          newindex++;
           if (!editB.isEmpty() && editB.contains(newindex)) {
-            newindex++;
             if (Character.isWhitespace(oldCmp)) {
                 childDiff = createDiff(difference, Type.DELETE, 0.0);
                 childDiff.setLanguage(Language.WHITESPACE);
@@ -137,6 +136,7 @@ public class TextDrillDown extends DrillDown {
                     Config.scoreUnit);
             }   
           } else {
+            oldindex++;
             childDiff = createDiff(difference, Type.EQUIVALENT,
                 0.0);
           }
@@ -163,12 +163,6 @@ public class TextDrillDown extends DrillDown {
       return true;
     }
     return false;
-  }
-
-  private Range<Long> convertEditRange(long prevStart, int start, int end) {
-    long rangeStart = (long) ASTNode.makePosition(start, 0) + prevStart;
-    long rangeEnd = (long) ASTNode.makePosition(end, 0) + prevStart;
-    return new Range<Long>(rangeStart, rangeEnd);
   }
 
 }

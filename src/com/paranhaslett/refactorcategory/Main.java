@@ -15,7 +15,7 @@ public class Main {
    */
   public static void main(String[] args) {
     Main tester = new Main();
-    tester.doTest("/home/paran/Documents/Test/Jasm/.git");
+    //tester.doTest("/home/paran/Documents/Test/Jasm/.git");
     tester.doTest("/home/paran/Documents/Test/lombok/.git");
     
   }

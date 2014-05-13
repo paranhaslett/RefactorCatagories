@@ -26,6 +26,7 @@ public class JavaDrillDown extends DrillDown {
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
+    //System.out.println("jdd");
 
     /* Get all the children differences */
 
@@ -131,6 +132,7 @@ public class JavaDrillDown extends DrillDown {
                 new AstDrillDown().drilldown(childDiff));
             results.addAll(collated);
           } else {
+            //System.out.println("childiff=" + childDiff);
             List<Difference> collated = collate(childDiff,drilldown(childDiff));
             // no need to match up if it is simply a drilldown
             return collated;

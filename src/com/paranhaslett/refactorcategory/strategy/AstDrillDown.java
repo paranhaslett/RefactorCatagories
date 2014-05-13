@@ -25,6 +25,8 @@ public class AstDrillDown extends DrillDown {
   List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
     List<Difference> result = new ArrayList<Difference>();
+    //System.out.println("Astdd");
+    
 
     CodeBlock oldCb = difference.getOldCb();
     CodeBlock newCb = difference.getNewCb();
@@ -44,6 +46,29 @@ public class AstDrillDown extends DrillDown {
       result.add(diff);
       return result;
     }
+    
+    if(oldAst.getRange().isEmpty()){
+      if (newAst.getRange().isEmpty()){
+        Difference diff = createDiff(difference, oldAst, newAst,
+            Type.EQUIVALENT, 0.0);
+        result.add(diff);
+       
+      } else {
+        Difference diff = createDiff(difference, oldAst, newAst, Type.INSERT,
+            Config.scoreUnit);
+        result.add(diff);
+      }
+      return result;
+    } else {
+      if (newAst.getRange().isEmpty()){
+        Difference diff = createDiff(difference, oldAst, newAst, Type.DELETE,
+            Config.scoreUnit);
+        result.add(diff);
+        return result;
+      }
+      
+    }
+
 
     // get all the children
     List<Ast> oldChildren = oldAst.getChildren();
@@ -162,6 +187,10 @@ public class AstDrillDown extends DrillDown {
 
   Difference createDiff(Difference difference, Ast oldAst, Ast newAst,
       Type type, double score) {
+  //  System.out.println("createDiff" + newAst.getRange()+"," + oldAst.getRange());
+ //   if (newAst.getRange().toString().equals("(4284426, 4284518)")){
+ //     System.out.println("here");
+ //   }
     Difference diff = createDiff(difference, type, score);
     diff.getNewCb().setAst(newAst);
     diff.getOldCb().setAst(oldAst);
