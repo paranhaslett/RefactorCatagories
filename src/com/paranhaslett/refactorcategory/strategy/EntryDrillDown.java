@@ -28,6 +28,7 @@ public class EntryDrillDown extends DrillDown {
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
+    
     List<Difference> results = new ArrayList<Difference>();
 
     CodeBlock oldCb = difference.getOldCb();
@@ -41,6 +42,9 @@ public class EntryDrillDown extends DrillDown {
 
     String oldPath = oldEnt.getPath();
     String newPath = newEnt.getPath();
+    
+    //System.out.println(oldPath);
+    //System.out.println(newPath);
 
     RawText oldRaw = oldCb.getEntry().getRawText();
     RawText newRaw = newCb.getEntry().getRawText();
@@ -53,11 +57,13 @@ public class EntryDrillDown extends DrillDown {
     
     if (oldPath.endsWith(".java")){
       oldAst = oldEnt.getCompilationUnit(oldCb.getRevision(), oldPath);
+      //oldAst = new Ast(new ASTNode<>());
       oldCb.setAst(oldAst);       
     }
     
     if (newPath.endsWith(".java")) {
       newAst = newEnt.getCompilationUnit(newCb.getRevision(), newPath);
+      //newAst = new Ast(new ASTNode<>());
       newCb.setAst(newAst);
     }
     
@@ -86,6 +92,7 @@ public class EntryDrillDown extends DrillDown {
       diff.getOldCb().setBlock(oldRange);
       diff.getNewCb().setBlock(newRange);
       
+      //System.out.println(edit.getType());
      
 
       switch (edit.getType()) {

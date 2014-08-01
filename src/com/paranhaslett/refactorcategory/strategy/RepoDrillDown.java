@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -41,7 +42,12 @@ public class RepoDrillDown extends DrillDown {
         ((GitRepo) GitRepo.getRepo()).setRepo(repo);
 
         RevWalk walk = new RevWalk(repo);
-        walk.markStart(walk.parseCommit(repo.resolve("HEAD")));
+        
+        ObjectId head = repo.resolve("HEAD");
+        
+        System.out.println(head);
+        
+        walk.markStart(walk.parseCommit(head));
         RevCommit newRc = null;
         for (Iterator<RevCommit> iterator = walk.iterator(); iterator.hasNext();) {
           RevCommit oldRc = iterator.next();

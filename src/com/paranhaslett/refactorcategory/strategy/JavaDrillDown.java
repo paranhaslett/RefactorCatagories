@@ -68,8 +68,6 @@ public class JavaDrillDown extends DrillDown {
             edit.getEndB());
 
         if (!editA.isEmpty() && !editB.isEmpty()
-            //&& editA.getEnd() - editA.getStart() == 1
-            //&& editB.getEnd() - editB.getStart() == 1
             && editA.contains(oldindex) && editB.contains(newindex)) {
           Difference childDiff;
           if (newCmp.getAst() != null 
@@ -127,10 +125,28 @@ public class JavaDrillDown extends DrillDown {
           
           if (oldCbBlock.contains(oldCmpBlock)
               && newCbBlock.contains(newCmpBlock)) {
+            //System.out.println("ast childiff=" + childDiff);
+            
+            /*CodeBlock doldCb = difference.getOldCb();
+            CodeBlock dnewCb = difference.getNewCb();
 
-            List<Difference> collated = collate(childDiff,
+            Ast oldAst = doldCb.getAst();
+            Ast newAst = dnewCb.getAst();
+            
+            String newDump = newAst.prettyPrint();
+            String oldDump = oldAst.prettyPrint();
+            
+            System.out.println(newDump);
+            System.out.println(oldDump);*/
+            
+           List<Difference> collated = collate(childDiff,
                 new AstDrillDown().drilldown(childDiff));
             results.addAll(collated);
+            
+          /*  for(Difference d:collated){
+              System.out.println(d.getType());
+            } */
+            
           } else {
             //System.out.println("childiff=" + childDiff);
             List<Difference> collated = collate(childDiff,drilldown(childDiff));
@@ -150,7 +166,7 @@ public class JavaDrillDown extends DrillDown {
       }
 
       if (diff.getOldCb().getAst() == null && diff.getNewCb().getAst() == null) {
-        textInserts.add(diff);
+        textInserts.addAll(new TextDrillDown().drilldown(diff));
       }
     }
 
@@ -162,7 +178,7 @@ public class JavaDrillDown extends DrillDown {
       }
 
       if (diff.getOldCb().getAst() == null && diff.getNewCb().getAst() == null) {
-        textDeletes.add(diff);
+        textDeletes.addAll(new TextDrillDown().drilldown(diff));
       }
     }
 

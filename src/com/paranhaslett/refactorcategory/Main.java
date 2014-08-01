@@ -9,7 +9,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import com.paranhaslett.refactorcategory.strategy.RepoDrillDown;
 
 public class Main {
-  
+
   /**
    * @param args
    */
@@ -17,9 +17,13 @@ public class Main {
     Main tester = new Main();
     //tester.doTest("/home/paran/Documents/Test/Jasm/.git");
     tester.doTest("/home/paran/Documents/Test/lombok/.git");
-    
+    //tester.doTest("/home/paran/Documents/Test/antlr4/.git");
+    //tester.doTest("/home/paran/Documents/Test/clojure/.git");
+    //tester.doTest("/home/paran/Documents/Test/jgit/.git");
+    //tester.doTest("/home/paran/Documents/Test/jpp/.git");
+    //tester.doTest("/home/paran/Documents/Test/ast-java/.git");
   }
-  
+
   private void doTest(String repoName){
     RepoDrillDown rdd = new RepoDrillDown();
     rdd.setRepo(repoName);

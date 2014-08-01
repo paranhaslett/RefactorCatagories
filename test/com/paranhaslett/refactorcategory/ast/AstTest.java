@@ -47,7 +47,7 @@ public class AstTest {
     Ast astb = new Ast(mdb);
     Ast astc = new Ast(mdc);
     assertEquals(asta.hashCode(), astb.hashCode());
-    assertNotEquals(asta.hashCode(), astc.hashCode());
+    assertFalse(asta.hashCode()==astc.hashCode());
   }
 
   @Test

@@ -10,11 +10,13 @@ import AST.JavaParser;
 import AST.Program;
 
 public class MyProgram extends Program{
+  private parser.JavaParser jparser = new parser.JavaParser();
   public JavaParser getJavaParser() {
     return new JavaParser() {
+      
       public CompilationUnit parse(java.io.InputStream is, String fileName)
           throws java.io.IOException, beaver.Parser.Exception {
-        return new parser.JavaParser().parse(is, fileName);
+        return jparser.parse(is, fileName);
       }
     };
   }

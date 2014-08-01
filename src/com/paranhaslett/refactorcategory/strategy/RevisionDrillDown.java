@@ -24,14 +24,12 @@ public class RevisionDrillDown extends DrillDown {
 
     System.out.println(difference.getOldCb().getRevision().getName() + " to "
         + difference.getNewCb().getRevision().getName());
-    
-    if ( difference.getNewCb().getRevision().getName().startsWith("Typo in changelog")){
-      System.out.println("Get ready");
-    }
 
     // Setup the both revisions as programs
     difference.getOldCb().getRevision().setProgram();
     difference.getNewCb().getRevision().setProgram();
+    
+    System.out.println("full");
 
     List<Difference> modify = new ArrayList<Difference>();
     List<Difference> inserts = new ArrayList<Difference>();
@@ -56,9 +54,6 @@ public class RevisionDrillDown extends DrillDown {
         case COPY:
         case RENAMED:
         case MODIFY:
-          if (oldEnt.getPath().endsWith("Delombok.java")){
-            System.out.println(oldEnt.getPath() + " to " + newEnt.getPath());
-          }
           modify.addAll(new EntryDrillDown().drilldown(diff));
           break;
         case DELETE:

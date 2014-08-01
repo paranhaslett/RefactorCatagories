@@ -33,20 +33,7 @@ public class AstDrillDown extends DrillDown {
 
     Ast oldAst = oldCb.getAst();
     Ast newAst = newCb.getAst();
-
-    if (!newAst.dumpEquals(oldAst)) {
-      Difference diff;
-      if (newAst.equalTypes(oldAst)) {
-        diff = createDiff(difference, oldAst, newAst, Type.RENAMED,
-            Config.scoreUnit);
-      } else {
-        diff = createDiff(difference, oldAst, newAst, Type.MODIFY,
-            2 * Config.scoreUnit);
-      }
-      result.add(diff);
-      return result;
-    }
-    
+ 
     if(oldAst.getRange().isEmpty()){
       if (newAst.getRange().isEmpty()){
         Difference diff = createDiff(difference, oldAst, newAst,
@@ -67,6 +54,19 @@ public class AstDrillDown extends DrillDown {
         return result;
       }
       
+    }
+    
+    if (!newAst.dumpEquals(oldAst)) {
+      Difference diff;
+      if (newAst.equalTypes(oldAst)) {
+        diff = createDiff(difference, oldAst, newAst, Type.RENAMED,
+            Config.scoreUnit);
+      } else {
+        diff = createDiff(difference, oldAst, newAst, Type.MODIFY,
+            2 * Config.scoreUnit);
+      }
+      result.add(diff);
+      return result;
     }
 
 
@@ -94,8 +94,9 @@ public class AstDrillDown extends DrillDown {
             Config.scoreUnit * 2);
         result = collate(diff,
             multipleElements(oldChildren, newChildren, difference));
+        
       }
-    }
+    } 
 
     return result;
   }

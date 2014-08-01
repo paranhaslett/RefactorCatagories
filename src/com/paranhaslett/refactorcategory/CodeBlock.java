@@ -74,7 +74,7 @@ public class CodeBlock implements Cloneable {
     int endColumn = ASTNode.getColumn(block.getEnd().intValue());
 
     //System.out.println("[" + startLine + ":" + startColumn + " - " + endLine
-    //    + ":" + endColumn + "]");
+     //   + ":" + endColumn + "]");
     String lines = entry.getRawText().getString(startLine, endLine, false);
     //System.out.println(lines.intern());
     int startOfLastRow = lines.length();
@@ -99,7 +99,8 @@ public class CodeBlock implements Cloneable {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     if (revision != null) {
-      sb.append(revision.getName().substring(0, 15));
+      int strsize = Math.min(revision.getName().length() -1, 15);
+      sb.append(revision.getName().substring(0, strsize));
       sb.append(":");
       if (entry != null) {
         String path = entry.getPath();

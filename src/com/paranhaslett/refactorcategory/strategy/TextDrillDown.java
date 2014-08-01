@@ -17,7 +17,6 @@ import com.paranhaslett.refactorcategory.Config;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Language;
 import com.paranhaslett.refactorcategory.Difference.Type;
-import com.paranhaslett.refactorcategory.Range;
 import com.paranhaslett.refactorcategory.compare.CharacterComparitor;
 import com.paranhaslett.refactorcategory.compare.CharacterSequence;
 
@@ -26,8 +25,6 @@ public class TextDrillDown extends DrillDown {
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
-    
-   // System.out.println("tdd");
 
     CodeBlock oldCb = difference.getOldCb();
     CodeBlock newCb = difference.getNewCb();
@@ -45,7 +42,7 @@ public class TextDrillDown extends DrillDown {
         difference.setScore(0.0);
       } else {
         difference.setType(Type.MODIFY);
-        difference.setScore(Config.scoreUnit * 2);
+        difference.setScore(0.0);
       }
       results.add(difference);
       return results;
@@ -65,22 +62,39 @@ public class TextDrillDown extends DrillDown {
 
     // TODO single line, multiline comment, javadoc, other
 
-    //System.out.println(":" + oldStr + ":");
-    //System.out.println(":" + newStr + ":");
+    // System.out.println(":" + oldStr + ":");
+    // System.out.println(":" + newStr + ":");
 
     CharacterSequence oldCs = new CharacterSequence(oldStr);
     CharacterSequence newCs = new CharacterSequence(newStr);
 
-    long oldPos = oldCb.getBlock().getStart();
-    long newPos = newCb.getBlock().getStart();
+    //long oldPos = oldCb.getBlock().getStart();
+    //long newPos = newCb.getBlock().getStart();
 
     EditList editList = DiffAlgorithm
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
             CharacterComparitor.DEFAULT, oldCs, newCs);
 
-    int oldindex = 0;
-    int newindex = 0;
+    //int oldindex = 0;
+    //int newindex = 0;
 
+    double totalScore = 0;
+
+    for (Edit edit : editList) {
+      if (edit.getType() == Edit.Type.INSERT
+          || edit.getType() == Edit.Type.REPLACE) {
+        totalScore += Config.scoreUnit * (edit.getEndB() - edit.getBeginB());
+      }
+      if (edit.getType() == Edit.Type.DELETE
+          || edit.getType() == Edit.Type.REPLACE) {
+        totalScore += Config.scoreUnit * (edit.getEndA() - edit.getBeginA());
+      }
+
+    }
+    
+    difference.setScore(totalScore/(oldStr.length() + newStr.length()));
+    results.add(difference);
+  /*
     while (oldindex < oldCs.size() && newindex < newCs.size()) {
 
       char oldCmp = oldCs.get(oldindex);
@@ -124,26 +138,24 @@ public class TextDrillDown extends DrillDown {
               childDiff = createDiff(difference, Type.INSERT, Config.scoreUnit);
             }
           }
-         
+
         } else {
           newindex++;
           if (!editB.isEmpty() && editB.contains(newindex)) {
             if (Character.isWhitespace(oldCmp)) {
-                childDiff = createDiff(difference, Type.DELETE, 0.0);
-                childDiff.setLanguage(Language.WHITESPACE);
+              childDiff = createDiff(difference, Type.DELETE, 0.0);
+              childDiff.setLanguage(Language.WHITESPACE);
             } else {
-                childDiff = createDiff(difference, Type.DELETE,
-                    Config.scoreUnit);
-            }   
+              childDiff = createDiff(difference, Type.DELETE, Config.scoreUnit);
+            }
           } else {
             oldindex++;
-            childDiff = createDiff(difference, Type.EQUIVALENT,
-                0.0);
+            childDiff = createDiff(difference, Type.EQUIVALENT, 0.0);
           }
         }
         results.add(childDiff);
       }
-    }
+    } */
     return results;
   }
 
@@ -166,3 +178,4 @@ public class TextDrillDown extends DrillDown {
   }
 
 }
+

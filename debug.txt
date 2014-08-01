@@ -1,0 +1,51 @@
+Problems with code
+
+category comment delete contains only white space 
+
+it does not go into the text drill down
+
+I think that the check for whitespace needs to be up front when we check for comments
+ in the Java and ast drill downs
+ 
+ the java drill down populates ast with null if it has no assigned ast. this could be an indication of whitespace comment or other text.
+ could also be the command for the parent which we need to get rid of.
+ 
+
+ 
+ There is only whitespace modifications rather than white-space deletes 
+ 
+ 
+null
+null
+
+new TypeAnalysis().apply(cf);
+new ClassFileVerifier().apply(cf);
+
+
+Memory issue
+
+java.lang.OutOfMemoryError: GC overhead limit exceeded
+
+It still exhibits even if the AstDrillDown is ommited
+It still exhibits even if the CodeBlock drill down is ommited
+It does not exhit if the compilation unit is not loaded
+
+Conclusion
+not a git issue even though is sometimes prints out a git stack trace
+it has something to do with the loading of the entire compilation unit
+
+It progressively gets worse with each entry added
+
+removing 
+oldAst = oldEnt.getCompilationUnit(oldCb.getRevision(), oldPath);
+without anything else exhibits this behaviour
+
+its in the jastaddJ java parser
+making only one javaer parser does not fix the issue
+
+
+
+
+
+ 
+ 

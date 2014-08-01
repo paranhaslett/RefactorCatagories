@@ -32,6 +32,17 @@ public class Calculator {
   }
   
 public void addNewDifferences(List<Difference> differences){
+    /* de-reference ASTs as they take up too much memory*/
+    for(Difference diff: differences){
+      CodeBlock cb = diff.getOldCb();
+      if (cb != null){
+        cb.setAst(null);
+      }
+      cb = diff.getNewCb();
+      if (cb != null){
+        cb.setAst(null);
+      }
+    }
     newDifferences.addAll(differences);
   }
 
