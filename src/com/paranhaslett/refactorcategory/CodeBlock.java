@@ -75,7 +75,12 @@ public class CodeBlock implements Cloneable {
 
     //System.out.println("[" + startLine + ":" + startColumn + " - " + endLine
      //   + ":" + endColumn + "]");
-    String lines = entry.getRawText().getString(startLine, endLine, false);
+    String lines;
+    try{
+    lines = entry.getRawText().getString(startLine, endLine, false);
+    } catch (ArrayIndexOutOfBoundsException aioobe){
+      lines = entry.getRawText().getString(startLine, endLine - 1, false);
+    }
     //System.out.println(lines.intern());
     int startOfLastRow = lines.length();
     if (lines.endsWith("\n")) {

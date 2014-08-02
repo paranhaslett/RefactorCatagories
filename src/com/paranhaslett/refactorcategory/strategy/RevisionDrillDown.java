@@ -28,8 +28,6 @@ public class RevisionDrillDown extends DrillDown {
     // Setup the both revisions as programs
     difference.getOldCb().getRevision().setProgram();
     difference.getNewCb().getRevision().setProgram();
-    
-    System.out.println("full");
 
     List<Difference> modify = new ArrayList<Difference>();
     List<Difference> inserts = new ArrayList<Difference>();

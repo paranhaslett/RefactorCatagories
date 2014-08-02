@@ -26,9 +26,9 @@ Memory issue
 
 java.lang.OutOfMemoryError: GC overhead limit exceeded
 
-It still exhibits even if the AstDrillDown is ommited
-It still exhibits even if the CodeBlock drill down is ommited
-It does not exhit if the compilation unit is not loaded
+It still exhibits even if the AstDrillDown is omitted
+It still exhibits even if the CodeBlock drill down is omitted
+It does not exhibit if the compilation unit is not loaded
 
 Conclusion
 not a git issue even though is sometimes prints out a git stack trace
@@ -41,11 +41,34 @@ oldAst = oldEnt.getCompilationUnit(oldCb.getRevision(), oldPath);
 without anything else exhibits this behaviour
 
 its in the jastaddJ java parser
-making only one javaer parser does not fix the issue
+making only one java parser does not fix the issue
+
+Memory options
+
+-XX:+HeapDumpOnOutOfMemoryError
+
+-XX:-UseGCOverheadLimit
+
+-verbose:gc
+
+
+Added @PrintConfiguration to print the combined interpreted configuration for a certain java file, improved problem reporting to post-release version bump
+full
 
 
 
-
-
+Fixed netbeans 7.4RC1 issue (JavaCompiler.version() was returning bogus values, so we now work around that javac bug). to Issue 559: NullPointerException when @NonNull is used in abstract method - Prevent NPE in javac and give a proper warning in both eclipse and javac - Add test cases
+full
  
  
+Fix suppressing diagnostic messages during resolution in #java8 #val to Only look at the line number for errors and warnings.
+full
+Only look at the line number for errors and warnings. to * Fixed 553: @XArgsConstructor (and @Builder on a class) did not look at @Accessors to handle field accessors. * various operations on names in javac were really slow; they are faster now.
+full
+
+FINALLY! Found the cause of a really weird eclipse bug, where _ANY_ mention of com.sun.tools.javac.tree.TreeMaker, anywhere in a source file, would disable pretty much every intelligent part of what makes the 'I' in IDE in eclipse: No auto-complete, no 'go to declaration', etcetera, but only since Eclipse Juno (not fixed in Kepler either). It's the presence of src/stubs/com/sun/tools/javac/util/Context.java. to Merge branch 'master' of github.com:rzwitserloot/lombok
+
+Added installer support for JBoss Developer Studio which is an eclipse variant. Also fixed a bug where eclipses installed in user.home weren't found automatically on windows. Also fixed a bug where STS installed in C:\Program Files (X86) wasn't found automatically. to Added @Log4j2 support.
+
+
+Its seems to be quite a serious computer laek as even when I shut down eclipse it still affects the os.

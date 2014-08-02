@@ -15,13 +15,15 @@ public class Main {
    */
   public static void main(String[] args) {
     Main tester = new Main();
-    //tester.doTest("/home/paran/Documents/Test/Jasm/.git");
-    tester.doTest("/home/paran/Documents/Test/lombok/.git");
+    tester.doTest("/home/paran/Documents/Test/Jasm/.git");
+    tester.doTest("/home/paran/Documents/Test/jpp/.git");
+    tester.doTest("/home/paran/Documents/Test/ast-java/.git");
+    //tester.doTest("/home/paran/Documents/Test/jacoco/.git");
+    //tester.doTest("/home/paran/Documents/Test/lombok/.git");
     //tester.doTest("/home/paran/Documents/Test/antlr4/.git");
     //tester.doTest("/home/paran/Documents/Test/clojure/.git");
     //tester.doTest("/home/paran/Documents/Test/jgit/.git");
-    //tester.doTest("/home/paran/Documents/Test/jpp/.git");
-    //tester.doTest("/home/paran/Documents/Test/ast-java/.git");
+    
   }
 
   private void doTest(String repoName){
