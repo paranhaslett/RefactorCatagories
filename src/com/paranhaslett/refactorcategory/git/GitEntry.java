@@ -20,6 +20,7 @@ import AST.ASTNode;
 
 import com.paranhaslett.refactorcategory.Range;
 import com.paranhaslett.refactorcategory.ast.Ast;
+import com.paranhaslett.refactorcategory.ast.MyProgram;
 import com.paranhaslett.refactorcategory.model.Entry;
 import com.paranhaslett.refactorcategory.model.Revision;
 
@@ -123,7 +124,9 @@ public class GitEntry implements Entry {
   @Override
   public Ast getCompilationUnit(Revision revision, String name) {
     GitRevision gitRevision = (GitRevision) revision;
-    return new Ast(gitRevision.getProgram().getCompilationUnit(name, content));
+    MyProgram myProg = gitRevision.getProgram();
+    //myProg.state().reset();
+    return new Ast(myProg.getCompilationUnit(name, content));
   }
 
   @Override

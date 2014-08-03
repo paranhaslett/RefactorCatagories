@@ -93,6 +93,8 @@ public class EntryDrillDown extends DrillDown {
       diff.getNewCb().setBlock(newRange);
       
       //System.out.println(edit.getType());
+      
+     
      
 
       switch (edit.getType()) {

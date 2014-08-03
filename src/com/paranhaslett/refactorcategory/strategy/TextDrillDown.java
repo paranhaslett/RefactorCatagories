@@ -159,7 +159,7 @@ public class TextDrillDown extends DrillDown {
     return results;
   }
 
-  private boolean isWhitespaces(String str) {
+ public static boolean isWhitespaces(String str) {
     Pattern pat = Pattern.compile("\\s*");
     Matcher mat = pat.matcher(str);
     if (mat.matches()) {

@@ -26,7 +26,7 @@ public class JavaDrillDown extends DrillDown {
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
-    //System.out.println("jdd");
+    // System.out.println("jdd");
 
     /* Get all the children differences */
 
@@ -48,7 +48,6 @@ public class JavaDrillDown extends DrillDown {
     int oldindex = 0;
     int newindex = 0;
 
-    
     List<Difference> modifies = new ArrayList<Difference>();
     List<Difference> inserts = new ArrayList<Difference>();
     List<Difference> deletes = new ArrayList<Difference>();
@@ -67,12 +66,11 @@ public class JavaDrillDown extends DrillDown {
         Range<Integer> editB = new Range<Integer>(edit.getBeginB(),
             edit.getEndB());
 
-        if (!editA.isEmpty() && !editB.isEmpty()
-            && editA.contains(oldindex) && editB.contains(newindex)) {
+        if (!editA.isEmpty() && !editB.isEmpty() && editA.contains(oldindex)
+            && editB.contains(newindex) && newCmp.getAst() != null
+            && oldCmp.getAst() != null) {
           Difference childDiff;
-          if (newCmp.getAst() != null 
-              && oldCmp.getAst() != null 
-              && newCmp.getAst().equalTypes(oldCmp.getAst())) {
+          if (newCmp.getAst().equalTypes(oldCmp.getAst())) {
             childDiff = createDiff(difference, oldCmp, newCmp, Type.RENAMED,
                 Config.scoreUnit);
           } else {
@@ -85,8 +83,16 @@ public class JavaDrillDown extends DrillDown {
           isInEditList = true;
 
         } else {
-
-          if (!editA.isEmpty() && editA.contains(oldindex)) {
+          if(isInsertOrDelete(oldCmp, editA, oldindex) && isInsertOrDelete(newCmp, editB, newindex)){
+            modifies.add(createDiff(difference, oldCmp, newCmp, Type.MODIFY,
+                2 * Config.scoreUnit));
+            oldindex++;
+            newindex++;
+            isInEditList = true;
+          } else {
+          
+          
+          if (!editA.isEmpty() && editA.contains(oldindex) ) {
             Difference childDiff = createDiff(difference, oldCmp, newCmp,
                 Type.DELETE, Config.scoreUnit);
             // System.out.println("DELETE:" + oldCmp.getRawText());
@@ -102,6 +108,8 @@ public class JavaDrillDown extends DrillDown {
             newindex++;
             isInEditList = true;
           }
+          }
+        
         }
         if (isInEditList) {
           break;
@@ -122,34 +130,33 @@ public class JavaDrillDown extends DrillDown {
           Difference childDiff = createDiff(difference, oldCmp, newCmp,
               Type.EQUIVALENT, 0.0);
 
-          
           if (oldCbBlock.contains(oldCmpBlock)
               && newCbBlock.contains(newCmpBlock)) {
-            //System.out.println("ast childiff=" + childDiff);
-            
-            /*CodeBlock doldCb = difference.getOldCb();
-            CodeBlock dnewCb = difference.getNewCb();
+            // System.out.println("ast childiff=" + childDiff);
 
-            Ast oldAst = doldCb.getAst();
-            Ast newAst = dnewCb.getAst();
-            
-            String newDump = newAst.prettyPrint();
-            String oldDump = oldAst.prettyPrint();
-            
-            System.out.println(newDump);
-            System.out.println(oldDump);*/
-            
-           List<Difference> collated = collate(childDiff,
+            /*
+             * CodeBlock doldCb = difference.getOldCb(); CodeBlock dnewCb =
+             * difference.getNewCb();
+             * 
+             * Ast oldAst = doldCb.getAst(); Ast newAst = dnewCb.getAst();
+             * 
+             * String newDump = newAst.prettyPrint(); String oldDump =
+             * oldAst.prettyPrint();
+             * 
+             * System.out.println(newDump); System.out.println(oldDump);
+             */
+
+            List<Difference> collated = collate(childDiff,
                 new AstDrillDown().drilldown(childDiff));
             results.addAll(collated);
-            
-          /*  for(Difference d:collated){
-              System.out.println(d.getType());
-            } */
-            
+
+            /*
+             * for(Difference d:collated){ System.out.println(d.getType()); }
+             */
+
           } else {
-            //System.out.println("childiff=" + childDiff);
-            List<Difference> collated = collate(childDiff,drilldown(childDiff));
+            // System.out.println("childiff=" + childDiff);
+            List<Difference> collated = collate(childDiff, drilldown(childDiff));
             // no need to match up if it is simply a drilldown
             return collated;
           }
@@ -253,6 +260,19 @@ public class JavaDrillDown extends DrillDown {
     }
 
     return children;
+  }
+  
+  private boolean isInsertOrDelete(CodeBlock cb, Range<Integer> edit, Integer value){
+    if (cb.getAst() == null){
+      if (TextDrillDown.isWhitespaces(cb.getRawText())){
+        return false;
+      }
+    }  
+    if (edit.isEmpty()){
+      return false;
+      
+    }
+    return edit.contains(value);
   }
 
   private void resolveEmptyAsts(CodeBlock cb) {
