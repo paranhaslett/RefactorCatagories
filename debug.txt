@@ -72,3 +72,7 @@ Added installer support for JBoss Developer Studio which is an eclipse variant. 
 
 
 Its seems to be quite a serious computer laek as even when I shut down eclipse it still affects the os.
+
+I have gotten around this by using different tests
+
+
