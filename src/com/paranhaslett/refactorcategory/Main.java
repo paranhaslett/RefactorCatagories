@@ -15,10 +15,10 @@ public class Main {
    */
   public static void main(String[] args) {
     Main tester = new Main();
-    //tester.doTest("/home/paran/Documents/Test/Jasm/.git");
+    tester.doTest("/home/paran/Documents/Test/Jasm/.git");
     //tester.doTest("/home/paran/Documents/Test/jpp/.git");
     //tester.doTest("/home/paran/Documents/Test/ast-java/.git");
-    tester.doTest("/home/paran/Documents/Test/java-object-diff/.git");
+    //tester.doTest("/home/paran/Documents/Test/java-object-diff/.git");
     //tester.doTest("/home/paran/Documents/Test/diffj/.git");
     //tester.doTest("/home/paran/Documents/Test/jacoco/.git");
     //tester.doTest("/home/paran/Documents/Test/lombok/.git");

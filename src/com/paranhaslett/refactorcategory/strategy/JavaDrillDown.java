@@ -132,30 +132,12 @@ public class JavaDrillDown extends DrillDown {
 
           if (oldCbBlock.contains(oldCmpBlock)
               && newCbBlock.contains(newCmpBlock)) {
-            // System.out.println("ast childiff=" + childDiff);
-
-            /*
-             * CodeBlock doldCb = difference.getOldCb(); CodeBlock dnewCb =
-             * difference.getNewCb();
-             * 
-             * Ast oldAst = doldCb.getAst(); Ast newAst = dnewCb.getAst();
-             * 
-             * String newDump = newAst.prettyPrint(); String oldDump =
-             * oldAst.prettyPrint();
-             * 
-             * System.out.println(newDump); System.out.println(oldDump);
-             */
 
             List<Difference> collated = collate(childDiff,
                 new AstDrillDown().drilldown(childDiff));
             results.addAll(collated);
 
-            /*
-             * for(Difference d:collated){ System.out.println(d.getType()); }
-             */
-
           } else {
-            // System.out.println("childiff=" + childDiff);
             List<Difference> collated = collate(childDiff, drilldown(childDiff));
             // no need to match up if it is simply a drilldown
             return collated;
@@ -244,10 +226,10 @@ public class JavaDrillDown extends DrillDown {
             CodeBlock commentCb = (CodeBlock) cb.clone();
             commentRange = commentRange.getIntersection(cb.getBlock());
             commentCb.setBlock(commentRange);
-            commentCb.setAst(null);// new CommentAst(commentCb.getRawText(),
-                                   // commentRange.getStart(),
-                                   // commentRange.getEnd()));
-            children.add(commentCb);
+            commentCb.setAst(null);
+            if(!commentRange.isEmpty()){
+              children.add(commentCb);
+            }
 
           }
         }

@@ -47,6 +47,7 @@ public class Ast implements Cloneable {
 
   public List<Ast> getChildren() {
     int numChild = astNode.getNumChild();
+    System.out.println("Number of children =" + numChild);
     List<Ast> result = new ArrayList<Ast>();
     for (int i = 0; i < numChild; i++) {
       Ast child = new Ast(astNode.getChild(i));
@@ -102,9 +103,10 @@ public class Ast implements Cloneable {
   private String getAstType(Ast ast){
     Class<?> enclosingClass = ast.astNode.getClass().getEnclosingClass();
     if (enclosingClass != null) {
-      return astNode.getClass().getEnclosingClass().getName();
+      return ast.astNode.getClass().getEnclosingClass().getName();
     } else 
-      return astNode.getClass().getName();
+      return ast.astNode.getClass().getName();
     }
+  
   }
 

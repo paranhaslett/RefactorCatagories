@@ -45,6 +45,10 @@ public class EntryDrillDown extends DrillDown {
     
     //System.out.println(oldPath);
     //System.out.println(newPath);
+    
+    if (oldPath.endsWith("TypeAnalysis.java") && oldCb.getRevision().getName().startsWith("Minor bug fix f")){
+      System.out.println("Debug");
+    }
 
     RawText oldRaw = oldCb.getEntry().getRawText();
     RawText newRaw = newCb.getEntry().getRawText();
