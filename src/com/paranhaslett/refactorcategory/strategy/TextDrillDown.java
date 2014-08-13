@@ -17,8 +17,11 @@ import com.paranhaslett.refactorcategory.Config;
 import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Language;
 import com.paranhaslett.refactorcategory.Difference.Type;
+import com.paranhaslett.refactorcategory.Range;
 import com.paranhaslett.refactorcategory.compare.CharacterComparitor;
 import com.paranhaslett.refactorcategory.compare.CharacterSequence;
+import com.paranhaslett.refactorcategory.compare.CodeBlockTextComparitor;
+import com.paranhaslett.refactorcategory.compare.CodeBlockTextSequence;
 
 public class TextDrillDown extends DrillDown {
 
@@ -59,24 +62,20 @@ public class TextDrillDown extends DrillDown {
       results.add(difference);
       return results;
     }
-
-    // TODO single line, multiline comment, javadoc, other
-
-    // System.out.println(":" + oldStr + ":");
-    // System.out.println(":" + newStr + ":");
+    
+    if(oldStr.equals(newStr)){
+      difference.setType(Type.EQUIVALENT);
+      difference.setScore(0);
+      results.add(difference);
+      return results;
+    }
 
     CharacterSequence oldCs = new CharacterSequence(oldStr);
     CharacterSequence newCs = new CharacterSequence(newStr);
 
-    //long oldPos = oldCb.getBlock().getStart();
-    //long newPos = newCb.getBlock().getStart();
-
     EditList editList = DiffAlgorithm
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
             CharacterComparitor.DEFAULT, oldCs, newCs);
-
-    //int oldindex = 0;
-    //int newindex = 0;
 
     double totalScore = 0;
 
@@ -91,75 +90,17 @@ public class TextDrillDown extends DrillDown {
       }
 
     }
-    
-    difference.setScore(totalScore/(oldStr.length() + newStr.length()));
+
+    difference.setScore(totalScore / (oldStr.length() + newStr.length()));
     results.add(difference);
-  /*
-    while (oldindex < oldCs.size() && newindex < newCs.size()) {
 
-      char oldCmp = oldCs.get(oldindex);
-      char newCmp = newCs.get(newindex);
-
-      for (Edit edit : editList) {
-        Range<Integer> editA = new Range<Integer>(edit.getBeginA(),
-            edit.getEndA());
-        Range<Integer> editB = new Range<Integer>(edit.getBeginB(),
-            edit.getEndB());
-
-        Difference childDiff;
-
-        if (!editA.isEmpty() && editA.contains(oldindex)) {
-          oldindex++;
-
-          if (!editB.isEmpty() && editB.contains(newindex)) {
-            newindex++;
-            if (Character.isWhitespace(oldCmp)) {
-              if (Character.isWhitespace(newCmp)) {
-                childDiff = createDiff(difference, Type.MODIFY, 0.0);
-                childDiff.setLanguage(Language.WHITESPACE);
-              } else {
-                childDiff = createDiff(difference, Type.INSERT,
-                    Config.scoreUnit);
-              }
-            } else {
-              if (Character.isWhitespace(newCmp)) {
-                childDiff = createDiff(difference, Type.DELETE,
-                    Config.scoreUnit);
-              } else {
-                childDiff = createDiff(difference, Type.MODIFY,
-                    Config.scoreUnit * 2);
-              }
-            }
-          } else {
-            if (Character.isWhitespace(newCmp)) {
-              childDiff = createDiff(difference, Type.INSERT, 0.0);
-              childDiff.setLanguage(Language.WHITESPACE);
-            } else {
-              childDiff = createDiff(difference, Type.INSERT, Config.scoreUnit);
-            }
-          }
-
-        } else {
-          newindex++;
-          if (!editB.isEmpty() && editB.contains(newindex)) {
-            if (Character.isWhitespace(oldCmp)) {
-              childDiff = createDiff(difference, Type.DELETE, 0.0);
-              childDiff.setLanguage(Language.WHITESPACE);
-            } else {
-              childDiff = createDiff(difference, Type.DELETE, Config.scoreUnit);
-            }
-          } else {
-            oldindex++;
-            childDiff = createDiff(difference, Type.EQUIVALENT, 0.0);
-          }
-        }
-        results.add(childDiff);
-      }
-    } */
     return results;
   }
 
- public static boolean isWhitespaces(String str) {
+  public static boolean isWhitespaces(String str) {
+    if (str == null || str.equals("")) {
+      return true;
+    }
     Pattern pat = Pattern.compile("\\s*");
     Matcher mat = pat.matcher(str);
     if (mat.matches()) {
@@ -177,5 +118,125 @@ public class TextDrillDown extends DrillDown {
     return false;
   }
 
-}
+  public List<Difference> drilldown(Difference difference,
+      List<CodeBlock> oldChildren, List<CodeBlock> newChildren)
+      throws IOException, GitAPIException {
 
+    // match up the AST children using longest common subsequence
+
+    CodeBlockTextSequence oldSeq = new CodeBlockTextSequence(oldChildren);
+    CodeBlockTextSequence newSeq = new CodeBlockTextSequence(newChildren);
+
+    EditList editList = DiffAlgorithm
+        .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
+            CodeBlockTextComparitor.DEFAULT, oldSeq, newSeq);
+
+    int oldindex = 0;
+    int newindex = 0;
+
+    List<Difference> modifies = new ArrayList<Difference>();
+    List<Difference> inserts = new ArrayList<Difference>();
+    List<Difference> deletes = new ArrayList<Difference>();
+    List<Difference> results = new ArrayList<Difference>();
+
+    while (oldindex < oldChildren.size() && newindex < newChildren.size()) {
+
+      CodeBlock oldCmp = oldChildren.get(oldindex);
+      CodeBlock newCmp = newChildren.get(newindex);
+
+      String oldStr = oldCmp.getRawText();
+      String newStr = newCmp.getRawText();
+
+      boolean isInEditList = false;
+
+      for (Edit edit : editList) {
+        Range<Integer> editA = new Range<Integer>(edit.getBeginA(),
+            edit.getEndA());
+        Range<Integer> editB = new Range<Integer>(edit.getBeginB(),
+            edit.getEndB());
+
+        if (!editA.isEmpty() && !editB.isEmpty()) {
+          Difference childDiff;
+
+          if (isWhitespaces(oldStr)) {
+            if (isWhitespaces(newStr)) {
+              childDiff = createDiff(difference, oldCmp, newCmp, Type.MODIFY, 0);
+              childDiff.setLanguage(Language.WHITESPACE);
+            } else {
+              childDiff = createDiff(difference, oldCmp, newCmp, Type.DELETE,
+                  Config.scoreUnit);
+            }
+          } else {
+            if (isWhitespaces(newStr)) {
+              childDiff = createDiff(difference, oldCmp, newCmp, Type.MODIFY, 0);
+              childDiff = createDiff(difference, oldCmp, newCmp, Type.INSERT,
+                  Config.scoreUnit);
+            } else {
+              childDiff = createDiff(difference, oldCmp, newCmp, Type.MODIFY,
+                  2 * Config.scoreUnit);
+            }
+          }
+          modifies.add(childDiff);
+          oldindex++;
+          newindex++;
+          isInEditList = true;
+        } else {
+
+          if ((!editB.isEmpty() || isWhitespaces(newStr))
+              && editA.contains(oldindex)) {
+            Difference childDiff = createDiff(difference, oldCmp, newCmp,
+                Type.DELETE, Config.scoreUnit);
+            // System.out.println("DELETE:" + oldCmp.getRawText());
+            oldindex++;
+            deletes.add(childDiff);
+            isInEditList = true;
+          }
+          if ((!editA.isEmpty() || isWhitespaces(oldStr))
+              && editB.contains(newindex)) {
+            Difference childDiff = createDiff(difference, oldCmp, newCmp,
+                Type.INSERT, Config.scoreUnit);
+            // System.out.println("INSERT:" + newCmp.getRawText());
+            inserts.add(childDiff);
+            newindex++;
+            isInEditList = true;
+          }
+        }
+        if (isInEditList) {
+          break;
+        }
+      }
+
+      if (!isInEditList) {
+        newindex++;
+        oldindex++;
+      }
+    }
+
+    results.addAll(matchup(inserts, deletes));
+    results.addAll(modifies);
+    return results;
+  }
+
+  private boolean isInsertOrDelete(CodeBlock cb, Range<Integer> edit,
+      Integer value) {
+    if (cb.getAst() == null) {
+      if (isWhitespaces(cb.getRawText())) {
+        return false;
+      }
+    }
+    if (edit.isEmpty()) {
+      return false;
+
+    }
+    return edit.contains(value);
+  }
+
+  Difference createDiff(Difference difference, CodeBlock oldCmp,
+      CodeBlock newCmp, Type type, double score) {
+    Difference childDiff = super.createDiff(difference, type, score);
+    childDiff.setOldCb(oldCmp);
+    childDiff.setNewCb(newCmp);
+    childDiff.setLanguage(Language.COMMENT);
+    return childDiff;
+  }
+}

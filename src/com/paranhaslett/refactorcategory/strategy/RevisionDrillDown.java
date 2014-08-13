@@ -128,7 +128,7 @@ public class RevisionDrillDown extends DrillDown {
 
   private String getPathExt(Entry ent) {
 
-    System.out.println(ent.getPath());
+   // System.out.println(ent.getPath());
     String path = ent.getPath();
     int index = path.lastIndexOf('.');
     if (index == -1) {

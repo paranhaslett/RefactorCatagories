@@ -16,34 +16,56 @@ import com.paranhaslett.refactorcategory.Difference;
 import com.paranhaslett.refactorcategory.Difference.Language;
 import com.paranhaslett.refactorcategory.Difference.Type;
 import com.paranhaslett.refactorcategory.Range;
-import com.paranhaslett.refactorcategory.ast.Ast;
 import com.paranhaslett.refactorcategory.ast.CommentAst;
-import com.paranhaslett.refactorcategory.compare.CodeBlockComparitor;
-import com.paranhaslett.refactorcategory.compare.CodeBlockSequence;
+import com.paranhaslett.refactorcategory.compare.CodeBlockAstComparitor;
+import com.paranhaslett.refactorcategory.compare.CodeBlockAstSequence;
 
 public class JavaDrillDown extends DrillDown {
 
   @Override
   public List<Difference> drilldown(Difference difference) throws IOException,
       GitAPIException {
-    // System.out.println("jdd");
 
+   
+    return null;
+  }
+ 
+  Difference createDiff(Difference difference, CodeBlock oldCmp,
+      CodeBlock newCmp, Type type, double score) {
+    Difference childDiff = super.createDiff(difference, type, score);
+    childDiff.setOldCb(oldCmp);
+    childDiff.setNewCb(newCmp);
+    if (areJavaBlocks(oldCmp, newCmp)) {
+      childDiff.setLanguage(Language.JAVA);
+    } else {
+      childDiff.setLanguage(Language.COMMENT);
+    }
+    return childDiff;
+  }
+
+  private boolean areJavaBlocks(CodeBlock oldCmp, CodeBlock newCmp) {
+    return oldCmp.getAst() != null && newCmp.getAst() != null
+        && !oldCmp.getAst().isEmpty() && !newCmp.getAst().isEmpty()
+        && !(oldCmp.getAst() instanceof CommentAst)
+        && !(newCmp.getAst() instanceof CommentAst);
+  }
+
+  public List<Difference> drilldown(Difference difference,
+      List<CodeBlock> oldChildren, List<CodeBlock> newChildren) throws IOException, GitAPIException {
+    
     /* Get all the children differences */
 
     CodeBlock oldCb = difference.getOldCb();
     CodeBlock newCb = difference.getNewCb();
 
-    List<CodeBlock> newChildren = getChildren(newCb);
-    List<CodeBlock> oldChildren = getChildren(oldCb);
-
     // match up the AST children using longest common subsequence
 
-    CodeBlockSequence oldSeq = new CodeBlockSequence(oldChildren);
-    CodeBlockSequence newSeq = new CodeBlockSequence(newChildren);
+    CodeBlockAstSequence oldSeq = new CodeBlockAstSequence(oldChildren);
+    CodeBlockAstSequence newSeq = new CodeBlockAstSequence(newChildren);
 
     EditList editList = DiffAlgorithm
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
-            CodeBlockComparitor.DEFAULT, oldSeq, newSeq);
+            CodeBlockAstComparitor.DEFAULT, oldSeq, newSeq);
 
     int oldindex = 0;
     int newindex = 0;
@@ -83,13 +105,6 @@ public class JavaDrillDown extends DrillDown {
           isInEditList = true;
 
         } else {
-          if(isInsertOrDelete(oldCmp, editA, oldindex) && isInsertOrDelete(newCmp, editB, newindex)){
-            modifies.add(createDiff(difference, oldCmp, newCmp, Type.MODIFY,
-                2 * Config.scoreUnit));
-            oldindex++;
-            newindex++;
-            isInEditList = true;
-          } else {
           
           
           if (!editA.isEmpty() && editA.contains(oldindex) ) {
@@ -108,7 +123,6 @@ public class JavaDrillDown extends DrillDown {
             newindex++;
             isInEditList = true;
           }
-          }
         
         }
         if (isInEditList) {
@@ -117,10 +131,9 @@ public class JavaDrillDown extends DrillDown {
       }
 
       if (!isInEditList) {
+        
         newindex++;
         oldindex++;
-
-        if (areJavaBlocks(oldCmp, newCmp)) {
 
           Range<Long> oldCmpBlock = oldCmp.getAst().getRange();
           Range<Long> newCmpBlock = newCmp.getAst().getRange();
@@ -132,151 +145,28 @@ public class JavaDrillDown extends DrillDown {
 
           if (oldCbBlock.contains(oldCmpBlock)
               && newCbBlock.contains(newCmpBlock)) {
-
-            List<Difference> collated = collate(childDiff,
-                new AstDrillDown().drilldown(childDiff));
+           
+            List<Difference> uncol = new AstDrillDown().drilldown(childDiff);
+            List<Difference> collated = collate(childDiff, uncol);
             results.addAll(collated);
 
-          } else {
-            List<Difference> collated = collate(childDiff, drilldown(childDiff));
-            // no need to match up if it is simply a drilldown
+          } else {   
+            List<Difference> uncol = new CodeBlockDrillDown().drilldown(childDiff);
+            if(uncol.size()==0){
+              uncol = new CodeBlockDrillDown().drilldown(childDiff);
+            }
+            List<Difference> collated = collate(childDiff, uncol);
+            collated.addAll(modifies);
             return collated;
           }
         }
-      }
-    }
-
-    // split up comments and java differences and test separately
-    List<Difference> textInserts = new ArrayList<Difference>();
-    List<Difference> javaInserts = new ArrayList<Difference>();
-    for (Difference diff : inserts) {
-      if (diff.getOldCb().getAst() != null && diff.getNewCb().getAst() != null) {
-        javaInserts.add(diff);
-      }
-
-      if (diff.getOldCb().getAst() == null && diff.getNewCb().getAst() == null) {
-        textInserts.addAll(new TextDrillDown().drilldown(diff));
-      }
-    }
-
-    List<Difference> textDeletes = new ArrayList<Difference>();
-    List<Difference> javaDeletes = new ArrayList<Difference>();
-    for (Difference diff : deletes) {
-      if (diff.getOldCb().getAst() != null && diff.getNewCb().getAst() != null) {
-        javaDeletes.add(diff);
-      }
-
-      if (diff.getOldCb().getAst() == null && diff.getNewCb().getAst() == null) {
-        textDeletes.addAll(new TextDrillDown().drilldown(diff));
-      }
-    }
-
-    results.addAll(new TextDrillDown().matchup(textInserts, textDeletes));
-    results.addAll(matchup(javaInserts, javaDeletes));
-    results.addAll(modifies);
-    return results;
-  }
-
-  Difference createDiff(Difference difference, CodeBlock oldCmp,
-      CodeBlock newCmp, Type type, double score) {
-    Difference childDiff = super.createDiff(difference, type, score);
-    childDiff.setOldCb(oldCmp);
-    childDiff.setNewCb(newCmp);
-    if (areJavaBlocks(oldCmp, newCmp)) {
-      childDiff.setLanguage(Language.JAVA);
-    } else {
-      childDiff.setLanguage(Language.COMMENT);
-    }
-    return childDiff;
-  }
-
-  private boolean areJavaBlocks(CodeBlock oldCmp, CodeBlock newCmp) {
-    return oldCmp.getAst() != null && newCmp.getAst() != null
-        && !oldCmp.getAst().isEmpty() && !newCmp.getAst().isEmpty()
-        && !(oldCmp.getAst() instanceof CommentAst)
-        && !(newCmp.getAst() instanceof CommentAst);
-  }
-
-  private List<CodeBlock> getChildren(CodeBlock cb) {
-    List<CodeBlock> children = new ArrayList<CodeBlock>();
-
-    resolveEmptyAsts(cb);
-
-    long minStart = cb.getAst().getRange().getStart();
-
-    for (Ast child : cb.getAst().getChildren()) {
-
-      try {
-
-        Range<Long> javaAst = child.getRange();
-
-        if (javaAst.intersects(cb.getBlock())) {
-          CodeBlock javaCb = (CodeBlock) cb.clone();
-          javaAst = javaAst.getIntersection(cb.getBlock());
-          javaCb.setBlock(javaAst);
-          javaCb.setAst(child);
-          children.add(javaCb);
-
-        }
-        if (minStart < child.getRange().getStart() - 1) {
-          Range<Long> commentRange = new Range<Long>(minStart, (long) (child
-              .getRange().getStart() - 1));
-
-          if (commentRange.intersects(cb.getBlock())) {
-            CodeBlock commentCb = (CodeBlock) cb.clone();
-            commentRange = commentRange.getIntersection(cb.getBlock());
-            commentCb.setBlock(commentRange);
-            commentCb.setAst(null);
-            if(!commentRange.isEmpty()){
-              children.add(commentCb);
-            }
-
-          }
-        }
-
-      } catch (CloneNotSupportedException e) {
-        // This should not happen as clone of Difference and CodeBlock are valid
-        e.printStackTrace();
-      }
-      minStart = child.getRange().getEnd() + 1;
-    }
-
-    return children;
-  }
-  
-  private boolean isInsertOrDelete(CodeBlock cb, Range<Integer> edit, Integer value){
-    if (cb.getAst() == null){
-      if (TextDrillDown.isWhitespaces(cb.getRawText())){
-        return false;
-      }
-    }  
-    if (edit.isEmpty()){
-      return false;
       
     }
-    return edit.contains(value);
-  }
 
-  private void resolveEmptyAsts(CodeBlock cb) {
-    long minStart = cb.getAst().getRange().getStart();
-
-    // sort out any JastAddJ numbering problems
-    Ast previous = null;
-
-    for (Ast child : cb.getAst().getChildren()) {
-      if (child.getRange().getStart() == 0) {
-        child.setStart(minStart);
-      } else {
-        if (previous != null && previous.getRange().getEnd() == 0) {
-          previous.setEnd(minStart);
-        }
-        minStart = child.getRange().getEnd();
-      }
-      previous = child;
-
-    }
-    if (previous != null && previous.getRange().getEnd() == 0) {
-      previous.setEnd(cb.getAst().getRange().getEnd());
-    }
+    results.addAll(matchup(inserts, deletes));
+    
+    results.addAll(modifies);
+    
+    return results;
   }
 }

@@ -18,6 +18,9 @@ public abstract class DrillDown {
    * if there is a delete/insert/move remove all equivalences
    */ 
   List<Difference> collate(Difference thisDiff, List<Difference> drilldown) {
+    if(drilldown == null || drilldown.size()==0){
+      
+    }
     List <Difference> results = new ArrayList <Difference>();
     for (Difference diff:drilldown){
       if (diff.getType()!= Type.EQUIVALENT){

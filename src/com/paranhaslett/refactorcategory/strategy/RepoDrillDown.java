@@ -45,7 +45,7 @@ public class RepoDrillDown extends DrillDown {
         
         ObjectId head = repo.resolve("HEAD");
         
-        System.out.println(head);
+        //System.out.println(head);
         
         walk.markStart(walk.parseCommit(head));
         RevCommit newRc = null;

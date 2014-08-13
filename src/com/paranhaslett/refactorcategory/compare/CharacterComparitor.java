@@ -10,7 +10,7 @@ public abstract class  CharacterComparitor extends SequenceComparator<CharacterS
         int bi) {
       char charA = a.children[ai];
       char charB = b.children[bi];
-      if (Character.isWhitespace(charA) && Character.isWhitespace(charB)){
+      if (Character.isWhitespace(charA) || Character.isWhitespace(charB)){
         return true;
       }
       return charA == charB;

@@ -43,9 +43,6 @@ public class EntryDrillDown extends DrillDown {
     String oldPath = oldEnt.getPath();
     String newPath = newEnt.getPath();
     
-    //System.out.println(oldPath);
-    //System.out.println(newPath);
-    
     if (oldPath.endsWith("TypeAnalysis.java") && oldCb.getRevision().getName().startsWith("Minor bug fix f")){
       System.out.println("Debug");
     }
@@ -74,8 +71,6 @@ public class EntryDrillDown extends DrillDown {
     if (oldAst != null && newAst != null){    
       difference.setLanguage(Language.JAVA);
     }
-    
-    //List<Difference> textDiff = new TextDrillDown().drilldown(difference);
 
     EditList editList = DiffAlgorithm
         .getAlgorithm(SupportedAlgorithm.HISTOGRAM).diff(
@@ -96,11 +91,6 @@ public class EntryDrillDown extends DrillDown {
       diff.getOldCb().setBlock(oldRange);
       diff.getNewCb().setBlock(newRange);
       
-      //System.out.println(edit.getType());
-      
-     
-     
-
       switch (edit.getType()) {
       case INSERT:
         diff.setType(Difference.Type.INSERT);
@@ -116,30 +106,15 @@ public class EntryDrillDown extends DrillDown {
           // do the modifies first
           Calculator calc = Calculator.getCalc();
           calc.addOldDifference(diff);
-          List<Difference> javaDiffs = new JavaDrillDown().drilldown(diff);
-          results.addAll(javaDiffs);
-          calc.addNewDifferences(javaDiffs);
+          List<Difference> cbDiffs = new CodeBlockDrillDown().drilldown(diff);
+          results.addAll(cbDiffs);
+          calc.addNewDifferences(cbDiffs);
         }
         break;
       default:
         break;
       }
     } 
-    
-    /*List<Difference> modifies = filter(textDiff,Type.MODIFY);
-    for (Difference diff:modifies){
-      if (oldAst != null && newAst != null){       
-        // do the modifies first
-        Calculator calc = Calculator.getCalc();
-        calc.addOldDifference(diff);
-        List<Difference> javaDiffs = new JavaDrillDown().drilldown(diff);
-        results.addAll(javaDiffs);
-        calc.addNewDifferences(javaDiffs);
-      }
-    }
-    
-    List<Difference> inserts = filter(textDiff,Type.INSERT);
-    List<Difference> deletes = filter(textDiff,Type.DELETE); */
     
     results.addAll(new CodeBlockDrillDown().matchup(inserts, deletes));
     return results;

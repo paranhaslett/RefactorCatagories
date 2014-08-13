@@ -20,6 +20,20 @@ public class Main {
     //tester.doTest("/home/paran/Documents/Test/ast-java/.git");
     //tester.doTest("/home/paran/Documents/Test/java-object-diff/.git");
     //tester.doTest("/home/paran/Documents/Test/diffj/.git");
+    //tester.doTest("/home/paran/Documents/Test/ire/.git");
+    //tester.doTest("/home/paran/Documents/Test/syntax/.git");
+    
+    //tester.doTest("/home/paran/Documents/Test/autorefactor/.git");
+    //tester.doTest("/home/paran/Documents/Test/git-merge-repos/.git");
+    
+    
+    
+    
+    //tester.doTest("/home/paran/Documents/Test/revori/.git");
+    
+    
+    //tester.doTest("/home/paran/Documents/Test/gitblit/.git");
+    
     //tester.doTest("/home/paran/Documents/Test/jacoco/.git");
     //tester.doTest("/home/paran/Documents/Test/lombok/.git");
     //tester.doTest("/home/paran/Documents/Test/antlr4/.git");
